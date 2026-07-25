@@ -123,8 +123,19 @@
         const tableBody = document.getElementById('materialsTableBody');
         const noDataRow = document.getElementById('noDataRow');
         
-        let materialsList = [];
+        // 1. CARGAR DATOS PERSISTENTES DE LOCALSTORAGE
+        let materialsList = JSON.parse(localStorage.getItem('inventarioMateriales')) || [];
         const numeroDestino = "Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
+
+        // RENDERIZAR TABLA INICIALMENTE AL CARGAR LA PÁGINA
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTabla();
+        });
+
+        // 2. FUNCIÓN AUXILIAR PARA GUARDAR EN LOCALSTORAGE
+        function guardarEnLocalStorage() {
+            localStorage.setItem('inventarioMateriales', JSON.stringify(materialsList));
+        }
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -138,6 +149,7 @@
                 selected: false
             };
             materialsList.push(newMaterial);
+            guardarEnLocalStorage(); // <-- Guardar cambios
             renderTabla();
             form.reset();
             document.getElementById('partNumber').focus();
@@ -171,7 +183,7 @@
         function cambiarSeleccionFila(id, isChecked) {
             const index = materialsList.findIndex(m => m.id === id);
             if(index !== -1) materialsList[index].selected = isChecked;
-            const todosMarcados = materialsList.every(m => m.selected);
+            const todosMarcados = materialsList.length > 0 && materialsList.every(m => m.selected);
             document.getElementById('selectAllRows').checked = todosMarcados;
             renderTabla();
         }
@@ -190,6 +202,7 @@
             }
             if(confirm(`¿Deseas eliminar los ${seleccionados} elementos seleccionados?`)) {
                 materialsList = materialsList.filter(m => !m.selected);
+                guardarEnLocalStorage(); // <-- Guardar cambios al eliminar
                 renderTabla();
             }
         }
