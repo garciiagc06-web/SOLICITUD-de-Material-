@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema ERP - Tablero Estático</title>
+    <style>
+        :root {
+            --bg-principal: #121212;
+            --bg-tarjeta: #1e1e1e;
+            --texto-principal: #ffffff;
+            --texto-secundario: #aaaaaa;
+            --color-almacen: #3498db;
+            --color-produccion: #e67e22;
+            --color-planeacion: #2ecc71;
+            --borde: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 5px;
+            padding: 5px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-principal);
+            color: var(--texto-principal);
+            padding: 50px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--borde);
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            color: var(--texto-secundario);
+            margin-top: 30px;
+        }
+
+        /* Contenedor del Tablero */
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        /* Estilos de los Módulos Independientes */
+        .modulo {
+            background-color: var(--bg-tarjeta);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            border-top: 5px solid var(--borde);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .modulo:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1px 20px rgba(0,0,0,0.7);
+        }
+
+        .modulo-almacen { border-top-color: var(--color-almacen); }
+        .modulo-produccion { border-top-color: var(--color-produccion); }
+        .modulo-planeacion { border-top-color: var(--color-planeacion); }
+
+        .modulo h2 {
+            margin-bottom: 40px;
+            font-size: 2rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Estilo para hacer las imágenes/emojis más grandes */
+        .icono-modulo {
+            font-size: 4rem;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        /* Listas de datos visuales */
+        .lista-datos {
+            list-style: none;
+        }
+
+        .item-lista {
+            background-color: rgba(250, 250, 250, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--borde);
+        }
+
+        .item-lista span {
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .badge-azul { background-color: rgba(52, 152, 219, 0.2); color: var(--color-almacen); }
+        .badge-naranja { background-color: rgba(230, 126, 34, 0.2); color: var(--color-produccion); }
+        .badge-verde { background-color: rgba(46, 204, 113, 0.2); color: var(--color-planeacion); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>ERP GLOBAL CONTROL</h1>
+        <p>Tablero Operacional de Control Estático</p>
+    </header>
+
+    <main class="tablero">
+        <!-- MÓDULO ALMACÉN -->
+        <section class="modulo modulo-almacen">
+            <h2><span class="icono-modulo">📦</span> Almacén</h2>
+        </section>
+
+        <!-- MÓDULO PRODUCCIÓN -->
+        <section class="modulo modulo-produccion">
+            <h2><span class="icono-modulo">⚙️</span> Producción</h2>
+        </section>
+
+        <!-- MÓDULO PLANEACIÓN -->
+        <section class="modulo modulo-planeacion">
+            <h2><span class="icono-modulo">📅</span> Planeación</h2>
+        </section>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Listados y Control con Google Sheets</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --border: #cbd5e1;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* TARJETA PASO 1 */
+    .import-card {
+      background: var(--surface);
+      border: 2px dashed var(--primary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .import-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Botón para Mostrar / Ocultar Paso 1 */
+    .btn-toggle {
+      background-color: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: background 0.2s;
+    }
+
+    .btn-toggle:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Contenedor colapsable del Paso 1 */
+    .step1-content {
+      margin-top: 1rem;
+      display: block; /* Visible por defecto */
+    }
+
+    .paste-box {
+      width: 100%;
+      height: 80px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    /* TABLA PREVIA DE ANÁLISIS (PASO 1) */
+    .preview-container {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      display: none;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .preview-table th {
+      background-color: #3b82f6;
+      color: #ffffff;
+      position: sticky;
+      top: 0;
+      padding: 0.65rem;
+      text-align: left;
+      border: 1px solid #2563eb;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .preview-table td {
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border);
+    }
+
+    .preview-table tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .preview-table tr:hover {
+      background-color: #eff6ff;
+    }
+
+    .btn-clear {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-msg {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #059669;
+    }
+
+    /* TOTALES GENERALES */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      padding: 1.25rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--primary);
+    }
+
+    .card h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.875rem;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+
+    .card .value {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    /* FORMULARIO */
+    .form-container {
+      background: var(--surface);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .input-group input {
+      padding: 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .input-group input[readonly] {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    button.btn-add {
+      grid-column: 1 / -1;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button.btn-add:hover {
+      background-color: #1d4ed8;
+    }
+
+    /* TABLA FINAL */
+    .table-container {
+      background: var(--surface);
+      border-radius: 8px;
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    table.main-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    table.main-table th {
+      background-color: #f1f5f9;
+      padding: 1rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--border);
+    }
+
+    table.main-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Listado de Inventario y Control</h1>
+
+    <!-- PASO 1: CON BOTÓN PARA OCULTAR Y MOSTRAR -->
+    <div class="import-card">
+      <div class="import-header">
+        <strong>🟢 PASO 1: Pegar Datos de Google Sheets</strong>
+        <div class="action-buttons">
+          <button class="btn-toggle" onclick="togglePaso1()">
+            <span id="toggleIcon">👁️</span> <span id="toggleText">Ocultar Sección</span>
+          </button>
+          <button class="btn-clear" onclick="limpiarPegado()">Limpiar Hoja</button>
+        </div>
+      </div>
+
+      <!-- CONTENIDO COLAPSABLE -->
+      <div id="step1Content" class="step1-content">
+        <p style="font-size: 0.85rem; margin: 0 0 0.5rem 0;">
+          Copia de tu hoja de cálculo las 5 columnas en este orden: <b>Código | Descripción | Cantidad por U/M | Unidad De Medida | PESO</b>
+        </p>
+        
+        <textarea id="pasteInput" class="paste-box" placeholder="Haz clic aquí y presiona Ctrl+V para pegar..." oninput="procesarDatosPegados()"></textarea>
+        
+        <div id="statusMsg" class="status-msg">Esperando datos de Google Sheets...</div>
+
+        <!-- TABLA DE VISTA PREVIA CON MÁRGENES DE LAS 5 COLUMNAS -->
+        <div id="previewContainer" class="preview-container">
+          <table class="preview-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th>Código (Google Sheets)</th>
+                <th>Descripción</th>
+                <th style="text-align: center;">Cantidad por U/M</th>
+                <th style="text-align: center;">Unidad De Medida</th>
+                <th style="text-align: right;">PESO</th>
+              </tr>
+            </thead>
+            <tbody id="previewBody">
+              <!-- Filas parseadas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TARJETAS DE ACUMULADOS -->
+    <div class="summary-cards">
+      <div class="card">
+        <h3>Total Cajas</h3>
+        <div class="value" id="totalCajas">0</div>
+      </div>
+      <div class="card">
+        <h3>Total Piezas</h3>
+        <div class="value" id="totalPiezas">0</div>
+      </div>
+      <div class="card">
+        <h3>Peso Total</h3>
+        <div class="value" id="totalPeso">0.00</div>
+      </div>
+      <div class="card">
+        <h3>Suma Acumulada Global</h3>
+        <div class="value" id="totalGeneral">0.00</div>
+      </div>
+    </div>
+
+    <!-- FORMULARIO DE CAPTURA -->
+    <div class="form-container">
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="codigo">Código (Artículo)</label>
+          <input type="text" id="codigo" placeholder="Ej: INV-04806" oninput="buscarEnCatalogo()">
+        </div>
+        <div class="input-group">
+          <label for="descripcion">Descripción</label>
+          <input type="text" id="descripcion" placeholder="Autocompletado..." readonly>
+        </div>
+        <div class="input-group">
+          <label for="umCant">Cantidad por U/M</label>
+          <input type="number" id="umCant" placeholder="1" readonly>
+        </div>
+        <div class="input-group">
+          <label for="umTexto">Unidad De Medida</label>
+          <input type="text" id="umTexto" placeholder="PZA" readonly>
+        </div>
+        <div class="input-group">
+          <label for="cajas">Cajas</label>
+          <input type="number" id="cajas" min="0" placeholder="0">
+        </div>
+        <div class="input-group">
+          <label for="piezas">Piezas Sueltas</label>
+          <input type="number" id="piezas" min="0" placeholder="0">
+        </div>
+        <div class="input-group">
+          <label for="peso">PESO (Libre o Autocompletado)</label>
+          <input type="number" id="peso" step="0.01" min="0" placeholder="0.00">
+        </div>
+        <button class="btn-add" onclick="agregarRegistro()">Agregar al Listado</button>
+      </div>
+    </div>
+
+    <!-- TABLA FINAL DE OPERACIONES -->
+    <div class="table-container">
+      <table class="main-table">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descripción</th>
+            <th>U/M</th>
+            <th>Cajas</th>
+            <th>Piezas Totales</th>
+            <th>Peso</th>
+            <th>CANTIDAD TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          <!-- Filas registradas -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let baseDatosSheets = {};
+    let listado = [];
+
+    // Función para mostrar / ocultar el contenido del Paso 1
+    function togglePaso1() {
+      const content = document.getElementById('step1Content');
+      const text = document.getElementById('toggleText');
+      const icon = document.getElementById('toggleIcon');
+
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        text.innerText = 'Ocultar Sección';
+        icon.innerText = '👁️';
+      } else {
+        content.style.display = 'none';
+        text.innerText = 'Mostrar Sección';
+        icon.innerText = '👁️‍🗨️';
+      }
+    }
+
+    function limpiarTexto(texto) {
+      if (!texto) return "";
+      return texto.toString().toUpperCase().replace(/[\s\-_]/g, '');
+    }
+
+    function procesarDatosPegados() {
+      const texto = document.getElementById('pasteInput').value;
+      const previewContainer = document.getElementById('previewContainer');
+      const previewBody = document.getElementById('previewBody');
+
+      if (!texto.trim()) {
+        previewContainer.style.display = 'none';
+        return;
+      }
+
+      const filas = texto.split(/\r?\n/);
+      baseDatosSheets = {};
+      previewBody.innerHTML = '';
+      let contador = 0;
+
+      filas.forEach(filaStr => {
+        if (!filaStr.trim()) return;
+
+        const col = filaStr.split('\t');
+
+        if (col.length >= 1) {
+          const codigoGS = col[0] ? col[0].trim() : "";
+          const descripcionGS = col[1] ? col[1].trim() : "Sin descripción";
+          
+          let cantUM = 1;
+          if (col[2]) {
+            const parsed = parseFloat(col[2].replace(/,/g, ''));
+            if (!isNaN(parsed) && parsed > 0) cantUM = parsed;
+          }
+
+          const unidadMedidaGS = col[3] ? col[3].trim() : "PZA";
+
+          let pesoGS = 0;
+          if (col[4]) {
+            const parsedPeso = parseFloat(col[4].replace(/,/g, ''));
+            if (!isNaN(parsedPeso)) pesoGS = parsedPeso;
+          }
+
+          if (codigoGS !== "") {
+            const claveBusqueda = limpiarTexto(codigoGS);
+            baseDatosSheets[claveBusqueda] = {
+              codigo: codigoGS,
+              descripcion: descripcionGS,
+              cantidadPorUM: cantUM,
+              unidadMedida: unidadMedidaGS,
+              peso: pesoGS
+            };
+
+            contador++;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="text-align: center; color: #64748b;">${contador}</td>
+              <td><strong>${codigoGS}</strong></td>
+              <td>${descripcionGS}</td>
+              <td style="text-align: center;">${cantUM}</td>
+              <td style="text-align: center;"><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem;">${unidadMedidaGS}</span></td>
+              <td style="text-align: right;">${pesoGS.toFixed(2)}</td>
+            `;
+            previewBody.appendChild(tr);
+          }
+        }
+      });
+
+      if (contador > 0) {
+        previewContainer.style.display = 'block';
+        document.getElementById('statusMsg').innerText = `¡Éxito! Se detectaron y ordenaron ${contador} filas con las 5 columnas de Google Sheets.`;
+      } else {
+        previewContainer.style.display = 'none';
+      }
+
+      buscarEnCatalogo();
+    }
+
+    function limpiarPegado() {
+      document.getElementById('pasteInput').value = '';
+      document.getElementById('previewContainer').style.display = 'none';
+      document.getElementById('statusMsg').innerText = 'Esperando datos de Google Sheets...';
+      baseDatosSheets = {};
+      buscarEnCatalogo();
+    }
+
+    function buscarEnCatalogo() {
+      const codigoEscrito = document.getElementById('codigo').value;
+      const claveBusqueda = limpiarTexto(codigoEscrito);
+      
+      const campoDesc = document.getElementById('descripcion');
+      const campoUMCant = document.getElementById('umCant');
+      const campoUMTexto = document.getElementById('umTexto');
+      const campoPeso = document.getElementById('peso');
+
+      if (baseDatosSheets[claveBusqueda]) {
+        const item = baseDatosSheets[claveBusqueda];
+        campoDesc.value = item.descripcion;
+        campoUMCant.value = item.cantidadPorUM;
+        campoUMTexto.value = item.unidadMedida;
+        if (item.peso > 0) campoPeso.value = item.peso;
+      } else {
+        campoDesc.value = "";
+        campoUMCant.value = 1;
+        campoUMTexto.value = "PZA";
+      }
+    }
+
+    function agregarRegistro() {
+      const codigoInput = document.getElementById('codigo').value.trim();
+      const descripcion = document.getElementById('descripcion').value.trim() || "Sin descripción";
+      const umCant = parseFloat(document.getElementById('umCant').value) || 1;
+      const umTexto = document.getElementById('umTexto').value.trim() || "PZA";
+
+      const cajas = parseFloat(document.getElementById('cajas').value) || 0;
+      const piezasSueltas = parseFloat(document.getElementById('piezas').value) || 0;
+      const pesoLibre = parseFloat(document.getElementById('peso').value) || 0;
+
+      if (!codigoInput) {
+        alert('Por favor ingresa un código.');
+        return;
+      }
+
+      const piezasTotales = (cajas * umCant) + piezasSueltas;
+      const cantidadTotalRenglon = cajas + piezasTotales + pesoLibre;
+
+      const item = {
+        id: Date.now(),
+        codigo: codigoInput,
+        descripcion,
+        unidadMedida: umTexto,
+        cajas,
+        piezasTotales,
+        pesoLibre,
+        cantidadTotal: cantidadTotalRenglon
+      };
+
+      listado.push(item);
+      limpiarCamposFormulario();
+      actualizarInterfaz();
+    }
+
+    function limpiarCamposFormulario() {
+      document.getElementById('codigo').value = '';
+      document.getElementById('descripcion').value = '';
+      document.getElementById('umCant').value = '';
+      document.getElementById('umTexto').value = '';
+      document.getElementById('cajas').value = '';
+      document.getElementById('piezas').value = '';
+      document.getElementById('peso').value = '';
+    }
+
+    function actualizarInterfaz() {
+      const tbody = document.getElementById('cuerpoTabla');
+      tbody.innerHTML = '';
+
+      let acumCajas = 0;
+      let acumPiezas = 0;
+      let acumPeso = 0;
+      let acumTotalGeneral = 0;
+
+      listado.forEach(item => {
+        acumCajas += item.cajas;
+        acumPiezas += item.piezasTotales;
+        acumPeso += item.pesoLibre;
+        acumTotalGeneral += item.cantidadTotal;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${item.codigo}</strong></td>
+          <td>${item.descripcion}</td>
+          <td>${item.unidadMedida}</td>
+          <td>${item.cajas.toLocaleString()}</td>
+          <td>${item.piezasTotales.toLocaleString()}</td>
+          <td>${item.pesoLibre.toFixed(2)}</td>
+          <td><strong>${item.cantidadTotal.toFixed(2)}</strong></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('totalCajas').innerText = acumCajas.toLocaleString();
+      document.getElementById('totalPiezas').innerText = acumPiezas.toLocaleString();
+      document.getElementById('totalPeso').innerText = acumPeso.toFixed(2);
+      document.getElementById('totalGeneral').innerText = acumTotalGeneral.toFixed(2);
+    }
+  </script>
+</body>
+</html>

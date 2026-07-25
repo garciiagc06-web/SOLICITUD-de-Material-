@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Componentes e Inventario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* Reflejo brillante superior sobre el fondo negro oscuro */
+        .brillante-bg {
+            background-image: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.07) 0%, rgba(5,5,6,1) 70%);
+        }
+    </style>
+</head>
+<body class="bg-[#050506] brillante-bg text-gray-200 min-h-screen font-sans antialiased">
+
+    <!-- Encabezado Principal - Gris Claro Cristalino Nítido -->
+    <header class="bg-[#eceff4]/20 backdrop-blur-md p-4 shadow-2xl border-b border-white/20 sticky top-0 z-50 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
+        <div class="hidden lg:block"></div>
+        
+        <div class="text-center">
+            <h1 class="text-2xl font-bold tracking-wider text-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.15)]">SOLICITUD DE MATERIAL</h1>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 w-full lg:w-auto justify-center lg:justify-end">
+            <!-- Botón Eliminar: Rojo Cristalino -->
+            <button onclick="eliminarSeleccionados()" class="bg-rose-950/30 hover:bg-rose-700/80 text-rose-300 hover:text-white font-medium py-2 px-4 rounded-md border border-rose-500/25 hover:border-rose-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
+                🗑️ ELIMINAR
+            </button>
+            
+            <!-- Botón Solicitar: Verde Cristalino -->
+            <button onclick="enviarPorWhatsApp()" class="bg-emerald-950/30 hover:bg-emerald-600/80 text-emerald-300 hover:text-white font-semibold py-2 px-4 rounded-md border border-emerald-500/25 hover:border-emerald-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center gap-1.5">
+                📱 SOLICITAR
+            </button>
+            
+            <!-- Botón Exportar: Azul Cristalino -->
+            <button onclick="exportarSeleccionadosAExcel()" class="bg-blue-950/30 hover:bg-blue-600/80 text-blue-300 hover:text-white font-semibold py-2 px-4 rounded-md border border-blue-500/25 hover:border-blue-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center gap-1">
+                📊 EXPORTAR
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        
+        <!-- FORMULARIO - Movimiento Dinámico al pasar cursor (Hover) y usarlo -->
+        <div class="bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl space-y-4 h-fit border border-white/20 transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
+            <!-- Encabezado del Formulario -->
+            <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
+                <h2 class="text-lg font-semibold text-gray-100 tracking-wide">REGISTRO DE MATERIAL</h2>
+            </div>
+            
+            <form id="materialForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-200">Número de Parte</label>
+                    <input type="text" id="partNumber" placeholder="Ej. PART-1029-X" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 uppercase font-mono focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-200">Descripción</label>
+                    <input type="text" id="matDescription" placeholder="Ej. Leg brace Izquierdo R y L" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-200">Artículo / Categoría</label>
+                    <input type="text" id="matArticle" placeholder="Ej. Remaches, Varillas, Perfiles" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-200">Cantidad</label>
+                        <input type="number" id="matQuantity" min="0" step="any" placeholder="100" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-200">Unidad de Medida</label>
+                        <select id="matUom" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200">
+                            <option value="Pallet">Pallet</option>
+                            <option value="PZ">Pieza (PZ)</option>
+                            <option value="KG">Kilogramo (KG)</option>
+                            <option value="MTS">Metros (MTS)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-white/15 hover:bg-white/25 text-white font-semibold py-2.5 px-4 rounded-md border border-white/30 transition shadow-md duration-300 transform active:scale-95">
+                        REGISTRAR
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TABLA - Movimiento Dinámico al pasar cursor (Hover) -->
+        <div class="lg:col-span-2 bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl border border-white/20 flex flex-col transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
+            <!-- Encabezado de la Tabla -->
+            <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
+                <h2 class="text-lg font-semibold text-gray-100 tracking-wide">ALUMINIO - FIBRA DE VIDRIO</h2>
+            </div>
+            
+            <div class="overflow-x-auto rounded border border-white/15 mt-2">
+                <table class="min-w-full divide-y divide-white/15 text-left text-sm">
+                    <thead class="bg-black/60 text-gray-200">
+                        <tr>
+                            <th class="px-4 py-3 text-center w-12">
+                                <input type="checkbox" id="selectAllRows" onchange="alternarTodosLosCheckboxes(this)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer transition-transform active:scale-90">
+                            </th>
+                            <th class="px-4 py-3 text-gray-100 font-bold">No. Parte</th>
+                            <th class="px-4 py-3 text-gray-100 font-bold">Descripción</th>
+                            <th class="px-4 py-3 text-gray-100 font-bold">Artículo</th>
+                            <th class="px-4 py-3 text-right text-gray-100 font-bold">Cantidad</th>
+                            <th class="px-4 py-3 text-center text-gray-100 font-bold">U.M.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialsTableBody" class="divide-y divide-white/15">
+                        <tr id="noDataRow">
+                            <td colspan="6" class="px-4 py-12 text-center text-gray-300 italic">No hay registros cargados en este momento.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('materialForm');
+        const tableBody = document.getElementById('materialsTableBody');
+        const noDataRow = document.getElementById('noDataRow');
+        
+        let materialsList = [];
+        const numeroDestino = "Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const newMaterial = {
+                id: Date.now(),
+                partNumber: document.getElementById('partNumber').value.trim().toUpperCase(),
+                description: document.getElementById('matDescription').value.trim(),
+                article: document.getElementById('matArticle').value.trim(),
+                quantity: parseFloat(document.getElementById('matQuantity').value),
+                uom: document.getElementById('matUom').value,
+                selected: false
+            };
+            materialsList.push(newMaterial);
+            renderTabla();
+            form.reset();
+            document.getElementById('partNumber').focus();
+        });
+
+        function renderTabla() {
+            if (materialsList.length === 0) {
+                tableBody.innerHTML = '';
+                tableBody.appendChild(noDataRow);
+                document.getElementById('selectAllRows').checked = false;
+                return;
+            }
+            tableBody.innerHTML = '';
+            materialsList.forEach((mat) => {
+                const tr = document.createElement('tr');
+                tr.className = mat.selected ? 'bg-white/25 text-white font-medium' : 'hover:bg-white/10 transition-colors duration-150';
+                tr.innerHTML = `
+                    <td class="px-4 py-3.5 text-center">
+                        <input type="checkbox" ${mat.selected ? 'checked' : ''} onchange="cambiarSeleccionFila(${mat.id}, this.checked)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer">
+                    </td>
+                    <td class="px-4 py-3.5 font-mono text-xs font-bold text-blue-300">${mat.partNumber}</td>
+                    <td class="px-4 py-3.5 text-gray-100">${mat.description}</td>
+                    <td class="px-4 py-3.5 text-gray-200">${mat.article}</td>
+                    <td class="px-4 py-3.5 text-right font-bold text-emerald-400">${mat.quantity.toLocaleString()}</td>
+                    <td class="px-4 py-3.5 text-center text-xs bg-black/50 text-gray-100 rounded-sm font-bold border border-white/5 transform transition-transform duration-200 hover:scale-105">${mat.uom}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function cambiarSeleccionFila(id, isChecked) {
+            const index = materialsList.findIndex(m => m.id === id);
+            if(index !== -1) materialsList[index].selected = isChecked;
+            const todosMarcados = materialsList.every(m => m.selected);
+            document.getElementById('selectAllRows').checked = todosMarcados;
+            renderTabla();
+        }
+
+        function alternarTodosLosCheckboxes(masterCheckbox) {
+            const status = masterCheckbox.checked;
+            materialsList.forEach(m => m.selected = status);
+            renderTabla();
+        }
+
+        function eliminarSeleccionados() {
+            const seleccionados = materialsList.filter(m => m.selected).length;
+            if (seleccionados === 0) {
+                alert("Por favor selecciona primero las casillas de los artículos.");
+                return;
+            }
+            if(confirm(`¿Deseas eliminar los ${seleccionados} elementos seleccionados?`)) {
+                materialsList = materialsList.filter(m => !m.selected);
+                renderTabla();
+            }
+        }
+
+        function enviarPorWhatsApp() {
+            const itemsAEnviar = materialsList.filter(m => m.selected);
+            
+            if (itemsAEnviar.length === 0) {
+                alert("Por favor selecciona las casillas (checkboxes) de los materiales que deseas enviar por WhatsApp.");
+                return;
+            }
+
+            let mensaje = `📋*Solicitud De Material*\n`;
+            mensaje += `=============================\n\n`;
+
+            itemsAEnviar.forEach((mat, index) => {
+                mensaje += `*Item #${index + 1}*\n`;
+                mensaje += `🔹 *No. Parte:* ${mat.partNumber}\n`;
+                mensaje += `🔹 *Descripción:* ${mat.description}\n`;
+                mensaje += `🔹 *Artículo:* ${mat.article}\n`;
+                mensaje += `🔹 *Cantidad:* ${mat.quantity.toLocaleString()} ${mat.uom}\n`;
+                mensaje += `-----------------------------\n`;
+            });
+
+            const mensajeCodificado = encodeURIComponent(mensaje);
+            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroDestino}&text=${mensajeCodificado}`;
+            window.open(urlWhatsApp, '_blank');
+        }
+
+        async function exportarSeleccionadosAExcel() {
+            const itemsAExportar = materialsList.filter(m => m.selected);
+            if (itemsAExportar.length === 0) {
+                alert("No has seleccionado ningún artículo para exportar.");
+                return;
+            }
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Materiales Seleccionados');
+            const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1F2937' } };
+            const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+            const headers = ["Número de Parte", "Descripción", "Artículo / Categoría", "Cantidad", "Unidad de Medida"];
+            
+            sheet.getRow(2).height = 25;
+            headers.forEach((h, index) => {
+                const cell = sheet.getRow(2).getCell(index + 2);
+                cell.value = h; cell.fill = headerFill; cell.font = headerFont;
+                cell.alignment = { horizontal: 'center', vertical: 'center' };
+            });
+
+            let currentRow = 3;
+            itemsAExportar.forEach((mat) => {
+                const row = sheet.getRow(currentRow);
+                row.height = 20;
+                const values = [mat.partNumber, mat.description, mat.article, mat.quantity, mat.uom];
+                values.forEach((val, index) => {
+                    const cell = row.getCell(index + 2);
+                    cell.value = val; cell.font = { name: 'Arial', size: 10 };
+                    cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
+                    if (index === 3) { cell.alignment = { horizontal: 'right' }; cell.numFormat = '#,##0.00'; }
+                    else if (index === 4) cell.alignment = { horizontal: 'center' };
+                    else cell.alignment = { horizontal: 'left' };
+                });
+                currentRow++;
+            });
+            sheet.getColumn(2).width = 20; sheet.getColumn(3).width = 35; sheet.getColumn(4).width = 22;
+            sheet.getColumn(5).width = 15; sheet.getColumn(6).width = 18; sheet.getColumn(1).width = 4;
+            const buffer = await workbook.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), "Reporte_Materiales.xlsx");
+        }
+    </script>
+</body>
+</html>

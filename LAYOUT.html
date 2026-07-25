@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Industrial con Listado de Control Operativo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librerías de Excel requeridas para Spck Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* Fondo Negro Oscuro Brilloso con Efecto Glossy / Reflejo Gradiente Sutil */
+        body {
+            background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #050507 100%);
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Asegurar que el contenido esté por encima del pseudo-elemento de brillo */
+        header, .max-w-7xl {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Cuadrícula con tono considerablemente más bajito y sutil */
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image: linear-gradient(to right, rgba(0, 139, 163, 0.18) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 139, 163, 0.18) 1px, transparent 1px);
+        }
+        
+        /* Clase para ocultar las cuadrículas */
+        .grid-hidden {
+            background-image: none !important;
+        }
+
+        .draggable-item { cursor: move; }
+
+        /* Estilo especial para la línea punteada central en pasillos */
+        .pasillo-dinamico::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            transform: translateY(-50%);
+            background-image: repeating-linear-gradient(90deg, #6b7280 0px, #6b7280 6px, transparent 6px, transparent 12px);
+            z-index: 1;
+            pointer-events: none;
+        }
+        /* Asegura que el texto quede por encima de la línea del pasillo */
+        .pasillo-dinamico div.label-container {
+            position: relative;
+            z-index: 2;
+            background-color: #9ca3af; 
+            padding: 0 4px;
+            border-radius: 2px;
+            color: #111827 !important;
+        }
+
+        /* Tiradores de redimensión con los signos < > */
+        .resizer-h, .resizer-v, .resizer-both {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #00f0ff;
+            background: rgba(0, 0, 0, 0.8);
+            user-select: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .draggable-item:hover .resizer-h,
+        .draggable-item:hover .resizer-v,
+        .draggable-item:hover .resizer-both {
+            opacity: 1;
+        }
+
+        /* Tirador Ancho (Derecha) */
+        .resizer-h {
+            right: 0; top: 0; bottom: 0; width: 12px; cursor: ew-resize;
+        }
+        /* Tirador Alto (Abajo) */
+        .resizer-v {
+            left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize;
+        }
+        /* Tirador Esquina (Ambos) */
+        .resizer-both {
+            right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize;
+            border-top-left-radius: 4px;
+        }
+
+        /* ==========================================================
+           DISEÑO CON SECCIONES EN GRIS CLARO Y TRANSPARENCIA APLICADA
+        ============================================================ */
+        
+        .seccion-cristalina {
+            background: rgba(220, 224, 230, 0.29) !important;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            color: #1f2937 !important;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+        }
+
+        .seccion-cristalina:hover {
+            transform: translateY(-5px);
+            background: rgba(230, 235, 242, 0.58) !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        .seccion-cristalina:focus-within {
+            transform: translateY(-2px);
+            border-color: #2563eb !important;
+        }
+
+        /* Forzar textos oscuros legibles dentro de las secciones gris claro */
+        .seccion-cristalina h2, 
+        .seccion-cristalina label, 
+        .seccion-cristalina p {
+            color: #1f2937 !important;
+        }
+
+        .input-animado {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .input-animado:hover {
+            transform: scale(1.01);
+            border-color: #9ca3af;
+        }
+
+        .input-animado:focus {
+            outline: none;
+            transform: translateX(5px);
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen font-sans">
+
+    <!-- VENTANA FLOTANTE DE EDICIÓN DIRECTA (MODAL SUPERIOR) -->
+    <div id="inlineEditPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-xl relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">Edicion de Informacion</h3>
+                <button onclick="closeInlineEditor()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <input type="hidden" id="inlineId">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Tipo de Zona</label>
+                    <select id="inlineType" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                        <option value="trabajo">Maquinado</option>
+                        <option value="operacional">Estación de Trabajo</option>
+                        <option value="pasillo">Pasillo / Tránsito</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Proceso</label>
+                    <input type="text" id="inlineProceso" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs text-gray-400 mb-1">Operación</label>
+                    <input type="text" id="inlineOperacion" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div class="grid grid-cols-3 gap-2 md:col-span-2">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Estándar HR</label>
+                        <input type="text" id="inlineEstandar" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Ops. Req</label>
+                        <input type="number" id="inlineOpsReq" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Ops. Act</label>
+                        <input type="number" id="inlineOpsAct" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs text-gray-400 mb-1">Área / Línea</label>
+                    <input type="text" id="inlineArea" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div class="flex items-center justify-end space-x-3 md:col-span-2 pt-2 border-t border-gray-700/60">
+                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Cancelar</button>
+                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Actualizar Estación</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encabezado Centrado y Balanceado con CSS Grid -->
+    <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-3 items-center">
+        <div></div>
+        <div class="text-center">
+            <h1 class="text-2xl font-bold tracking-wide text-gray-100">Diseñador de Layout Industrial</h1>
+            <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
+        </div>
+        <div class="flex justify-end items-center space-x-3">
+            <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center space-x-1">
+                <span>📊 Exportar </span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal en Flujo Vertical -->
+    <div class="max-w-7xl mx-auto p-4 space-y-6">
+
+        <!-- LIBRERÍA DE DISEÑOS (GESTIÓN DE GUARDADO/CARGA/NUEVO) -->
+        <div class="seccion-cristalina p-4 rounded-lg shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 w-full md:w-auto flex-1">
+                <div class="flex-1">
+                    <label class="block text-xs font-semibold mb-1">Nombre del Procto</label>
+                    <input type="text" id="currentDesignName" placeholder="Ej. Planta_Norte_Linea1" class="input-animado w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-2 text-sm bacAZkdrop-blur-sm">
+                </div>
+                <div class="pt-5 flex space-x-2">
+                    <button type="button" onclick="nuevoDiseno()" class="bg-amber-600/80 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-md border border-amber-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm" title="Crear un diseño nuevo desde cero">
+                        📄 Nuevo
+                    </button>
+                    <button type="button" onclick="guardarDisenoActual()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
+                        💾 Guardar Diseño
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 w-full md:w-auto flex-1 border-t md:border-t-0 md:border-l border-gray-400/40 pt-4 md:pt-0 md:pl-4">
+                <div class="flex-1">
+                    <label class="block text-xs font-semibold mb-1">Librería de Diseños Guardados</label>
+                    <select id="librarySelect" class="input-animado w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-2 text-sm backdrop-blur-sm">
+                        <option value="">-- Selecciona un diseño --</option>
+                    </select>
+                </div>
+                <div class="pt-5 flex space-x-2">
+                    <button type="button" onclick="cargarDisenoSeleccionado()" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
+                        📂 Cargar
+                    </button>
+                    <button type="button" onclick="eliminarDisenoSeleccionado()" class="bg-red-600/80 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-md border border-red-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
+                        🗑️ Borrar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 1. FORMULARIO DE REGISTRO (CONTROL DE ESTACIÓN) -->
+        <div class="seccion-cristalina p-4 rounded-lg shadow-lg">
+            <h2 id="formTitle" class="text-lg font-semibold border-b border-gray-400/50 pb-2 mb-3">1. Control de Estación</h2>
+            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <input type="hidden" id="editingId" value="">
+                
+                <!-- Columna 1 -->
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-xs font-semibold">Tipo de Zona Visual</label>
+                        <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" onchange="sincronizarDatosEnVivo()">
+                            <option value="trabajo">Maquinado</option>
+                            <option value="operacional">Estación de Trabajo</option>
+                            <option value="pasillo">Pasillo / Tránsito</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold">Proceso</label>
+                        <input type="text" id="procProceso" placeholder="Ej. Ensamble de Escaleras" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
+                    </div>
+                </div>
+                
+                <!-- Columna 2 -->
+                <div class="space-y-2">
+                    <div>
+                        <label class="block text-xs font-semibold">Operación (Nombre Estación)</label>
+                        <input type="text" id="procOperacion" placeholder="Ej. Remachado de Peldaños" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold">Largo (Líneas)</label>
+                            <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold">Ancho (Columnas)</label>
+                            <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna 3 -->
+                <div class="space-y-2">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold">Estándar HR</label>
+                            <input type="text" id="procEstandar" placeholder="450" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold">Ops. Req.</label>
+                            <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold">Ops. Act.</label>
+                            <input type="number" id="procOpsAct" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 items-end">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold">Área / Línea</label>
+                            <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
+                        </div>
+                        <div class="flex space-x-1">
+                            <button type="submit" id="submitBtn" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Agregar</button>
+                            <button type="button" id="cancelBtn" class="hidden bg-gray-500/80 hover:bg-gray-400 text-white font-semibold py-2 px-4 rounded-md border border-gray-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm" onclick="resetFormState()">X</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 2. VISTA PRELIMINAR -->
+        <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full relative">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
+                <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
+                    Ocultar Cuadrícula
+                </button>
+            </div>
+            <div id="plantCanvas" class="relative w-full h-[450px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
+                <!-- Objetos dinámicos -->
+            </div>
+        </div>
+
+        <!-- 3. LISTADO DE CONTROL OPERATIVO -->
+        <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full">
+            <h2 class="text-xl font-semibold mb-4">3. Listado de Control Operativo</h2>
+            <div class="overflow-x-auto rounded border border-gray-400/60 bg-white/40 shadow-sm backdrop-blur-md">
+                <table class="min-w-full divide-y divide-gray-300 text-left text-xs">
+                    <thead class="bg-gray-200/70 text-gray-800 font-bold">
+                        <tr>
+                            <th class="px-4 py-3">Proceso</th>
+                            <th class="px-4 py-3">Operación</th>
+                            <th class="px-4 py-3">Dim.</th>
+                            <th class="px-4 py-3">Estándar</th>
+                            <th class="px-4 py-3 text-center">Ops Req.</th>
+                            <th class="px-4 py-3 text-center">Ops Act.</th>
+                            <th class="px-4 py-3">Área</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryList" class="divide-y divide-gray-200/60 text-gray-800">
+                        <tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('areaForm');
+        const canvas = document.getElementById('plantCanvas');
+        const inventoryList = document.getElementById('inventoryList');
+        const emptyRow = document.getElementById('emptyRow');
+        
+        let database = {};
+        let objectCount = 0;
+        const scale = 20;
+
+        const colorMap = {
+            trabajo: { bg: 'bg-[#000000]', hex: '000000', borderHex: '22C55E', text: 'text-[#22c55e] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#22c55e]', extraClass: '' },
+            operacional: { bg: 'bg-[#000000]', hex: '000000', borderHex: '6B7280', text: 'text-gray-200 font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: '' },
+            pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' }
+        };
+
+        // --- FUNCIONES DE LIBRERÍA / LOCALSTORAGE ---
+        function actualizarSelectLibreria() {
+            const select = document.getElementById('librarySelect');
+            select.innerHTML = '<option value="">-- Selecciona un diseño --</option>';
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            Object.keys(savedLibrary).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+        }
+
+        function nuevoDiseno() {
+            if (Object.keys(database).length > 0) {
+                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño? Asegúrate de haber guardado los cambios importantes.")) {
+                    return;
+                }
+            }
+
+            // Limpiar canvas actual, base de datos, tabla y campo de nombre
+            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            
+            database = {};
+            objectCount = 0;
+            document.getElementById('currentDesignName').value = "";
+            document.getElementById('librarySelect').value = "";
+            resetFormState();
+        }
+
+        function guardarDisenoActual() {
+            const designName = document.getElementById('currentDesignName').value.trim();
+            if (!designName) {
+                alert("Por favor asigna un nombre al diseño antes de guardarlo.");
+                return;
+            }
+            if (Object.keys(database).length === 0) {
+                alert("No hay estaciones o elementos en el layout para guardar.");
+                return;
+            }
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            savedLibrary[designName] = {
+                database: database,
+                objectCount: objectCount
+            };
+            localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
+            actualizarSelectLibreria();
+            alert(`¡Diseño "${designName}" guardado correctamente en tu librería!`);
+        }
+
+        function cargarDisenoSeleccionado() {
+            const designName = document.getElementById('librarySelect').value;
+            if (!designName) {
+                alert("Por favor selecciona un diseño de la librería.");
+                return;
+            }
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            if (!savedLibrary[designName]) {
+                alert("El diseño seleccionado no existe.");
+                return;
+            }
+
+            // Limpiar canvas actual y tabla
+            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            
+            database = savedLibrary[designName].database;
+            objectCount = savedLibrary[designName].objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
+            document.getElementById('currentDesignName').value = designName;
+
+            const currentEmptyRow = document.getElementById('emptyRow');
+            if (Object.keys(database).length > 0 && currentEmptyRow) {
+                currentEmptyRow.style.display = 'none';
+            }
+
+            // Reconstruir elementos visuales y filas de tabla
+            Object.keys(database).forEach(id => {
+                const obj = database[id];
+                const visualObj = document.createElement('div');
+                visualObj.id = `visual-${id}`;
+                visualObj.style.left = `${obj.x || 20}px`;
+                visualObj.style.top = `${obj.y || 20}px`;
+                
+                visualObj.innerHTML = `
+                    <div class="label-container truncate pointer-events-none">${obj.operacion}</div>
+                    <div class="resizer-h">&lt;&gt;</div>
+                    <div class="resizer-v">&lt;&gt;</div>
+                    <div class="resizer-both">&lt;&gt;</div>
+                `;
+                
+                canvas.appendChild(visualObj);
+                updateVisualObject(id);
+                makeElementDraggableAndResizable(visualObj, id);
+                
+                visualObj.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    openInlineEditor(id);
+                });
+
+                const row = document.createElement('tr');
+                row.id = `row-${id}`;
+                row.innerHTML = generateRowHTML(id, obj.type, obj.proceso, obj.operacion, obj.width, obj.length, obj.estandar, obj.opsReq, obj.opsAct, obj.area);
+                inventoryList.appendChild(row);
+            });
+
+            alert(`¡Diseño "${designName}" cargado con éxito!`);
+        }
+
+        function eliminarDisenoSeleccionado() {
+            const designName = document.getElementById('librarySelect').value;
+            if (!designName) {
+                alert("Por favor selecciona un diseño para borrar.");
+                return;
+            }
+
+            if (confirm(`¿Estás seguro de eliminar el diseño "${designName}" de tu librería?`)) {
+                let savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+                delete savedLibrary[designName];
+                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
+                actualizarSelectLibreria();
+                document.getElementById('librarySelect').value = "";
+                alert("Diseño eliminado de la librería.");
+            }
+        }
+
+        // Inicializar librería al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            actualizarSelectLibreria();
+        });
+
+        function toggleCuadricula() {
+            canvas.classList.toggle('grid-hidden');
+            const btn = document.getElementById('btnToggleGrid');
+            if (canvas.classList.contains('grid-hidden')) {
+                btn.innerText = "Mostrar Cuadrícula";
+            } else {
+                btn.innerText = "Ocultar Cuadrícula";
+            }
+        }
+
+        function sincronizarDatosEnVivo() {
+            const editingId = document.getElementById('editingId').value;
+            if (!editingId) return;
+
+            const type = document.getElementById('zoneType').value;
+            const proceso = document.getElementById('procProceso').value;
+            const operacion = document.getElementById('procOperacion').value;
+            const length = parseInt(document.getElementById('zoneLength').value) || 1;
+            const width = parseInt(document.getElementById('zoneWidth').value) || 1;
+            const estandar = document.getElementById('procEstandar').value || '-';
+            const opsReq = document.getElementById('procOpsReq').value || '0';
+            const opsAct = document.getElementById('procOpsAct').value || '0';
+            const area = document.getElementById('procArea').value || '-';
+
+            database[editingId] = { ...database[editingId], type, proceso, operacion, length, width, estandar, opsReq, opsAct, area };
+            
+            updateVisualObject(editingId);
+            const rowElm = document.getElementById(`row-${editingId}`);
+            if (rowElm) {
+                rowElm.innerHTML = generateRowHTML(editingId, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area);
+            }
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const editingId = document.getElementById('editingId').value;
+            const type = document.getElementById('zoneType').value;
+            const proceso = document.getElementById('procProceso').value;
+            const operacion = document.getElementById('procOperacion').value;
+            const length = parseInt(document.getElementById('zoneLength').value);
+            const width = parseInt(document.getElementById('zoneWidth').value);
+            const estandar = document.getElementById('procEstandar').value || '-';
+            const opsReq = document.getElementById('procOpsReq').value || '0';
+            const opsAct = document.getElementById('procOpsAct').value || '0';
+            const area = document.getElementById('procArea').value || '-';
+
+            if (editingId) {
+                resetFormState();
+            } else {
+                objectCount++;
+                const currentEmptyRow = document.getElementById('emptyRow');
+                if (currentEmptyRow) currentEmptyRow.style.display = 'none';
+                database[objectCount] = { type, proceso, operacion, length, width, estandar, opsReq, opsAct, area, x: 20, y: 20 };
+
+                const visualObj = document.createElement('div');
+                visualObj.id = `visual-${objectCount}`;
+                visualObj.style.left = '20px';
+                visualObj.style.top = '20px';
+                
+                visualObj.innerHTML = `
+                    <div class="label-container truncate pointer-events-none">${operacion}</div>
+                    <div class="resizer-h">&lt;&gt;</div>
+                    <div class="resizer-v">&lt;&gt;</div>
+                    <div class="resizer-both">&lt;&gt;</div>
+                `;
+                
+                canvas.appendChild(visualObj);
+                updateVisualObject(objectCount);
+                
+                makeElementDraggableAndResizable(visualObj, objectCount);
+                
+                visualObj.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    openInlineEditor(objectCount);
+                });
+
+                const row = document.createElement('tr');
+                row.id = `row-${objectCount}`;
+                row.innerHTML = generateRowHTML(objectCount, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area);
+                inventoryList.appendChild(row);
+                form.reset();
+            }
+        });
+
+        function updateVisualObject(id) {
+            const obj = database[id];
+            const elm = document.getElementById(`visual-${id}`);
+            if(!elm) return;
+            
+            elm.style.width = `${obj.width * scale}px`;
+            elm.style.height = `${obj.length * scale}px`;
+            
+            const currentConfig = colorMap[obj.type];
+            const resizers = elm.querySelectorAll('.resizer-h, .resizer-v, .resizer-both');
+            resizers.forEach(r => r.style.color = `#${currentConfig.borderHex}`);
+
+            elm.className = `absolute cursor-move select-none p-1.5 ${currentConfig.bg} ${currentConfig.text} ${currentConfig.customBorder} ${currentConfig.extraClass} rounded draggable-item flex items-center justify-center text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 hover:z-20`;
+            
+            const label = elm.querySelector('.label-container');
+            if(label) label.innerText = obj.operacion;
+        }
+
+        function generateRowHTML(id, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area) {
+            return `
+                <td class="px-4 py-3 font-semibold text-gray-900">${proceso}</td>
+                <td class="px-4 py-3 text-gray-800">${operacion}</td>
+                <td class="px-4 py-3 text-gray-600">${width}x${length}</td>
+                <td class="px-4 py-3 text-gray-600">${estandar}</td>
+                <td class="px-4 py-3 text-center text-gray-700">${opsReq}</td>
+                <td class="px-4 py-3 text-center text-gray-700">${opsAct}</td>
+                <td class="px-4 py-3 text-gray-600">${area}</td>
+                <td class="px-4 py-3 text-center space-x-2">
+                    <button type="button" onclick="startEdit(${id})" class="text-blue-600 font-medium hover:underline">Editar</button>
+                    <button type="button" onclick="removeObject(${id})" class="text-red-600 font-medium hover:underline">Borrar</button>
+                </td>
+            `;
+        }
+
+        function makeElementDraggableAndResizable(elmnt, id) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            const rh = elmnt.querySelector('.resizer-h');
+            const rv = elmnt.querySelector('.resizer-v');
+            const rb = elmnt.querySelector('.resizer-both');
+
+            const initResize = (e, resizeH, resizeV) => {
+                e.preventDefault();
+                e.stopPropagation();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const startWidth = elmnt.offsetWidth;
+                const startHeight = elmnt.offsetHeight;
+
+                const doResize = (moveEvent) => {
+                    pos1 = moveEvent.clientX - pos3;
+                    pos2 = moveEvent.clientY - pos4;
+                    
+                    if (resizeH) {
+                        let newWidth = Math.max(scale, startWidth + pos1);
+                        elmnt.style.width = newWidth + 'px';
+                    }
+                    if (resizeV) {
+                        let newHeight = Math.max(scale, startHeight + pos2);
+                        elmnt.style.height = newHeight + 'px';
+                    }
+                };
+
+                const stopResize = () => {
+                    document.removeEventListener('mousemove', doResize);
+                    document.removeEventListener('mouseup', stopResize);
+                    
+                    let finalWidthBlocks = Math.max(1, Math.round(elmnt.offsetWidth / scale));
+                    let finalLengthBlocks = Math.max(1, Math.round(elmnt.offsetHeight / scale));
+                    
+                    database[id].width = finalWidthBlocks;
+                    database[id].length = finalLengthBlocks;
+                    
+                    updateVisualObject(id);
+
+                    const editingId = document.getElementById('editingId').value;
+                    if (editingId == id) {
+                        document.getElementById('zoneWidth').value = finalWidthBlocks;
+                        document.getElementById('zoneLength').value = finalLengthBlocks;
+                    }
+                    
+                    document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
+                        id, database[id].type, database[id].proceso, database[id].operacion, 
+                        finalWidthBlocks, finalLengthBlocks, database[id].estandar, database[id].opsReq, database[id].opsAct, database[id].area
+                    );
+                };
+
+                document.addEventListener('mousemove', doResize);
+                document.addEventListener('mouseup', stopResize);
+            };
+
+            rh.addEventListener('mousedown', (e) => initResize(e, true, false));
+            rv.addEventListener('mousedown', (e) => initResize(e, false, true));
+            rb.addEventListener('mousedown', (e) => initResize(e, true, true));
+
+            elmnt.onmousedown = (e) => {
+                if (e.target.classList.contains('resizer-h') || e.target.classList.contains('resizer-v') || e.target.classList.contains('resizer-both')) return;
+                
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                document.onmousemove = (moveEvent) => {
+                    pos1 = pos3 - moveEvent.clientX;
+                    pos2 = pos4 - moveEvent.clientY;
+                    pos3 = moveEvent.clientX;
+                    pos4 = moveEvent.clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                };
+                
+                document.onmouseup = () => {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                    database[id].x = Math.round(elmnt.offsetLeft / scale) * scale;
+                    database[id].y = Math.round(elmnt.offsetTop / scale) * scale;
+                    elmnt.style.left = database[id].x + "px";
+                    elmnt.style.top = database[id].y + "px";
+                };
+            };
+        }
+
+        // Funciones para manejar la ventana flotante modal
+        window.openInlineEditor = function(id) {
+            const data = database[id];
+            document.getElementById('inlineId').value = id;
+            document.getElementById('inlineType').value = data.type;
+            document.getElementById('inlineProceso').value = data.proceso;
+            document.getElementById('inlineOperacion').value = data.operacion;
+            document.getElementById('inlineEstandar').value = data.estandar;
+            document.getElementById('inlineOpsReq').value = data.opsReq;
+            document.getElementById('inlineOpsAct').value = data.opsAct;
+            document.getElementById('inlineArea').value = data.area;
+            
+            document.getElementById('inlineEditPanel').classList.remove('hidden');
+        };
+
+        window.closeInlineEditor = function() {
+            document.getElementById('inlineEditPanel').classList.add('hidden');
+        };
+
+        window.saveInlineChanges = function() {
+            const id = document.getElementById('inlineId').value;
+            if(!id) return;
+
+            database[id].type = document.getElementById('inlineType').value;
+            database[id].proceso = document.getElementById('inlineProceso').value;
+            database[id].operacion = document.getElementById('inlineOperacion').value;
+            database[id].estandar = document.getElementById('inlineEstandar').value || '-';
+            database[id].opsReq = document.getElementById('inlineOpsReq').value || '0';
+            database[id].opsAct = document.getElementById('inlineOpsAct').value || '0';
+            database[id].area = document.getElementById('inlineArea').value || '-';
+
+            updateVisualObject(id);
+            document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
+                id, database[id].type, database[id].proceso, database[id].operacion, 
+                database[id].width, database[id].length, database[id].estandar, database[id].opsReq, database[id].opsAct, database[id].area
+            );
+            closeInlineEditor();
+        };
+
+        window.startEdit = function(id) {
+            const data = database[id];
+            document.getElementById('editingId').value = id;
+            document.getElementById('zoneType').value = data.type;
+            document.getElementById('procProceso').value = data.proceso;
+            document.getElementById('procOperacion').value = data.operacion;
+            document.getElementById('zoneLength').value = data.length;
+            document.getElementById('zoneWidth').value = data.width;
+            document.getElementById('procEstandar').value = data.estandar;
+            document.getElementById('procOpsReq').value = data.opsReq;
+            document.getElementById('procOpsAct').value = data.opsAct;
+            document.getElementById('procArea').value = data.area;
+            document.getElementById('submitBtn').innerText = "Guardar";
+            document.getElementById('cancelBtn').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.resetFormState = function() {
+            form.reset();
+            document.getElementById('editingId').value = "";
+            document.getElementById('submitBtn').innerText = "Agregar";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        };
+
+        window.removeObject = function(id) {
+            const visual = document.getElementById(`visual-${id}`);
+            if(visual) visual.remove();
+            const row = document.getElementById(`row-${id}`);
+            if(row) row.remove();
+            delete database[id];
+            if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
+        };
+
+        async function exportarLayoutAExcel() {
+            if (Object.keys(database).length === 0) {
+                alert("Por favor agrega al menos una estación antes de exportar.");
+                return;
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            const sheet1 = workbook.addWorksheet('Plano de Planta');
+            for(let r=1; r<35; r++) {
+                const row = sheet1.getRow(r);
+                row.height = 22;
+                for(let c=1; c<45; c++) {
+                    const cell = row.getCell(c);
+                    cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'000000'} };
+                    cell.border = {
+                        top: {style:'thin', color: {argb:'008BA3'}}, left: {style:'thin', color: {argb:'008BA3'}},
+                        bottom: {style:'thin', color: {argb:'008BA3'}}, right: {style:'thin', color: {argb:'008BA3'}}
+                    };
+                }
+            }
+            
+            Object.keys(database).forEach(id => {
+                const obj = database[id];
+                const startCol = Math.max(1, Math.floor(obj.x / scale) + 2);
+                const startRow = Math.max(1, Math.floor(obj.y / scale) + 2);
+                const endCol = startCol + obj.width - 1;
+                const endRow = startRow + obj.length - 1;
+
+                for (let r = startRow; r <= endRow; r++) {
+                    for (let c = startCol; c <= endCol; c++) {
+                        const cell = sheet1.getRow(r).getCell(c);
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[obj.type].hex } };
+                        
+                        cell.border = {
+                            top: {style: r === startRow ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
+                            bottom: {style: r === endRow ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
+                            left: {style: c === startCol ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
+                            right: {style: c === endCol ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}}
+                        };
+                    }
+                }
+                
+                sheet1.mergeCells(startRow, startCol, endRow, endCol);
+                const mainCell = sheet1.getRow(startRow).getCell(startCol);
+                mainCell.value = obj.operacion;
+                mainCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: colorMap[obj.type].borderHex } };
+                mainCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+            });
+
+            const sheet2 = workbook.addWorksheet('Listado de Control');
+            const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E1E24' } };
+            const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+            
+            const headers = ["Proceso", "Operacion", "Estandar HR", "Operadores Requeridos", "Operadores Actuales", "Área"];
+            
+            sheet2.getRow(2).height = 25;
+            headers.forEach((h, index) => {
+                const cell = sheet2.getRow(2).getCell(index + 2);
+                cell.value = h;
+                cell.fill = headerFill;
+                cell.font = headerFont;
+                cell.alignment = { horizontal: 'center', vertical: 'center' };
+            });
+
+            let currentExcelRow = 3;
+            Object.keys(database).forEach(id => {
+                const obj = database[id];
+                const row = sheet2.getRow(currentExcelRow);
+                row.height = 20;
+
+                const values = [
+                    obj.proceso,
+                    obj.operacion,
+                    obj.estandar,
+                    parseInt(obj.opsReq),
+                    parseInt(obj.opsAct),
+                    obj.area
+                ];
+
+                values.forEach((val, index) => {
+                    const cell = row.getCell(index + 2);
+                    cell.value = val;
+                    cell.font = { name: 'Arial', size: 10 };
+                    cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
+                    
+                    if (index === 2 || index === 3 || index === 4) {
+                        cell.alignment = { horizontal: 'center', vertical: 'center' };
+                    } else {
+                        cell.alignment = { horizontal: 'left', vertical: 'center' };
+                    }
+                });
+                currentExcelRow++;
+            });
+
+            sheet2.columns.forEach((col, idx) => {
+                if(idx > 0) col.width = 24;
+            });
+            sheet2.getColumn(1).width = 4;
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const designNameTitle = document.getElementById('currentDesignName').value.trim() || "Layout_Control_Produccion";
+            saveAs(new Blob([buffer]), `${designNameTitle}.xlsx`);
+        }
+    </script>
+</body>
+</html>
