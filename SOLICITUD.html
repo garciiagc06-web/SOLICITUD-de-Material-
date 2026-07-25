@@ -27,6 +27,57 @@
         </div>
     </div>
 
+    <!-- Modal Flotante de Edición (Doble Clic) -->
+    <div id="editModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4 transform transition-all">
+            <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">✏️ Editar Registro</h3>
+                <button onclick="cerrarModalEditar()" class="text-gray-400 hover:text-white text-xl font-bold p-1">&times;</button>
+            </div>
+            
+            <form id="editForm" onsubmit="guardarEdicionModal(event)" class="space-y-3">
+                <input type="hidden" id="editModalId">
+                <div>
+                    <label class="block text-xs font-medium text-amber-300">OF (Orden de Fabricación)</label>
+                    <input type="text" id="editModalOF" class="mt-1 block w-full rounded-md bg-black/60 border border-amber-500/40 text-amber-300 p-2 uppercase font-mono text-sm focus:outline-none focus:border-amber-400" required>
+                    <span class="text-[10px] text-gray-400">Nota: Al cambiar la OF aquí, se actualizará en todos los registros.</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Número de Parte</label>
+                    <input type="text" id="editModalPart" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-blue-300 p-2 uppercase font-mono text-sm focus:outline-none focus:border-blue-400" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Descripción</label>
+                    <input type="text" id="editModalDesc" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Artículo / Categoría</label>
+                    <input type="text" id="editModalArticle" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300">Cantidad</label>
+                        <input type="number" id="editModalQty" min="0" step="any" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-emerald-400 font-bold p-2 text-sm focus:outline-none focus:border-emerald-400" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300">Unidad de Medida</label>
+                        <select id="editModalUom" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40">
+                            <option value="Pallet">Pallet</option>
+                            <option value="PZ">Pieza (PZ)</option>
+                            <option value="KG">Kilogramo (KG)</option>
+                            <option value="MTS">Metros (MTS)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pt-4 flex justify-end gap-3 border-t border-white/10">
+                    <button type="button" onclick="cerrarModalEditar()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded-md text-xs transition-all">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-md text-xs transition-all shadow-md">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Encabezado Principal -->
     <header class="bg-[#eceff4]/20 backdrop-blur-md p-4 shadow-2xl border-b border-white/20 sticky top-0 z-40 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
         <div class="hidden lg:block"></div>
@@ -111,11 +162,11 @@
                 <table class="min-w-full divide-y divide-white/15 text-left text-sm">
                     <thead class="bg-black/60 text-gray-200">
                         <tr>
-                            <th class="px-4 py-3 text-center w-12">
+                            <th class="px-3 py-3 text-center w-10">
                                 <input type="checkbox" id="selectAllRows" onchange="alternarTodosLosCheckboxes(this)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer transition-transform active:scale-90">
                             </th>
-                            <th class="px-4 py-3 text-amber-300 font-bold">OF (Editable)</th>
-                            <th class="px-4 py-3 text-gray-100 font-bold">No. Parte</th>
+                            <th class="px-2 py-3 text-amber-300 font-bold w-24">OF</th>
+                            <th class="px-4 py-3 text-gray-100 font-bold w-36 min-w-[130px]">No. Parte</th>
                             <th class="px-4 py-3 text-gray-100 font-bold">Descripción</th>
                             <th class="px-4 py-3 text-gray-100 font-bold">Artículo</th>
                             <th class="px-4 py-3 text-right text-gray-100 font-bold">Cantidad</th>
@@ -137,10 +188,8 @@
         const tableBody = document.getElementById('materialsTableBody');
         const noDataRow = document.getElementById('noDataRow');
         
-        // Carga de datos con guardado en tiempo real
         let materialsList = JSON.parse(localStorage.getItem('inventarioMateriales')) || [];
         
-        // Enlace del Grupo de WhatsApp
         const enlaceGrupoWhatsApp = "https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -180,13 +229,17 @@
             tableBody.innerHTML = '';
             materialsList.forEach((mat) => {
                 const tr = document.createElement('tr');
-                tr.className = mat.selected ? 'bg-white/25 text-white font-medium' : 'hover:bg-white/10 transition-colors duration-150';
+                tr.className = (mat.selected ? 'bg-white/25 text-white font-medium' : 'hover:bg-white/10 transition-colors duration-150') + ' cursor-pointer select-none';
+                
+                // EVENTO DE DOBLE CLIC PARA ABRIR EL MODAL DE EDICIÓN
+                tr.ondblclick = () => abrirModalEditar(mat.id);
+
                 tr.innerHTML = `
-                    <td class="px-4 py-3.5 text-center">
+                    <td class="px-3 py-3.5 text-center" onclick="event.stopPropagation()">
                         <input type="checkbox" ${mat.selected ? 'checked' : ''} onchange="cambiarSeleccionFila(${mat.id}, this.checked)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer">
                     </td>
-                    <td class="px-4 py-2">
-                        <input type="text" value="${mat.ofNumber || ''}" onchange="actualizarOF(${mat.id}, this.value)" class="bg-black/40 border border-amber-500/30 focus:border-amber-400 text-amber-300 font-mono text-xs font-bold rounded px-2 py-1 w-28 uppercase focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all" title="Haz clic para editar la OF">
+                    <td class="px-2 py-2" onclick="event.stopPropagation()">
+                        <input type="text" value="${mat.ofNumber || ''}" onchange="actualizarTodasLasOFs(this.value)" class="bg-black/40 border border-amber-500/30 focus:border-amber-400 text-amber-300 font-mono text-xs font-bold rounded px-1.5 py-1 w-20 uppercase focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all" title="OF del registro (al cambiarla, se actualizarán todas)">
                     </td>
                     <td class="px-4 py-3.5 font-mono text-xs font-bold text-blue-300">${mat.partNumber}</td>
                     <td class="px-4 py-3.5 text-gray-100">${mat.description}</td>
@@ -198,12 +251,58 @@
             });
         }
 
-        function actualizarOF(id, nuevoValor) {
+        /* --- FUNCIONES DEL MODAL FLOTANTE (EDITAR CON DOBLE CLIC) --- */
+        function abrirModalEditar(id) {
+            const item = materialsList.find(m => m.id === id);
+            if (!item) return;
+
+            document.getElementById('editModalId').value = item.id;
+            document.getElementById('editModalOF').value = item.ofNumber || '';
+            document.getElementById('editModalPart').value = item.partNumber || '';
+            document.getElementById('editModalDesc').value = item.description || '';
+            document.getElementById('editModalArticle').value = item.article || '';
+            document.getElementById('editModalQty').value = item.quantity;
+            document.getElementById('editModalUom').value = item.uom;
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function guardarEdicionModal(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editModalId').value);
             const index = materialsList.findIndex(m => m.id === id);
+
             if (index !== -1) {
-                materialsList[index].ofNumber = nuevoValor.trim().toUpperCase();
+                const nuevaOF = document.getElementById('editModalOF').value.trim().toUpperCase();
+                
+                // Actualizar los datos del ítem
+                materialsList[index].partNumber = document.getElementById('editModalPart').value.trim().toUpperCase();
+                materialsList[index].description = document.getElementById('editModalDesc').value.trim();
+                materialsList[index].article = document.getElementById('editModalArticle').value.trim();
+                materialsList[index].quantity = parseFloat(document.getElementById('editModalQty').value);
+                materialsList[index].uom = document.getElementById('editModalUom').value;
+
+                // Si se cambió la OF, se propaga a todos los registros
+                actualizarTodasLasOFs(nuevaOF);
+
                 guardarEnLocalStorage();
+                renderTabla();
+                cerrarModalEditar();
             }
+        }
+
+        // ACTUALIZA LA OF EN TODOS LOS REGISTROS A LA VEZ
+        function actualizarTodasLasOFs(nuevoValor) {
+            const valorFormateado = nuevoValor.trim().toUpperCase();
+            materialsList.forEach(m => {
+                m.ofNumber = valorFormateado;
+            });
+            guardarEnLocalStorage();
+            renderTabla();
         }
 
         function cambiarSeleccionFila(id, isChecked) {
@@ -269,7 +368,6 @@
                 mensaje += `-----------------------------\n`;
             });
 
-            // Copia al portapapeles, muestra aviso visual y abre el enlace del grupo
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(mensaje).then(() => {
                     mostrarNotificacion();
