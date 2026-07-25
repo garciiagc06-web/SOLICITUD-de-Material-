@@ -14,10 +14,21 @@
         }
     </style>
 </head>
-<body class="bg-[#050506] brillante-bg text-gray-200 min-h-screen font-sans antialiased">
+<body class="bg-[#050506] brillante-bg text-gray-200 min-h-screen font-sans antialiased relative">
 
-    <!-- Encabezado Principal - Gris Claro Cristalino Nítido -->
-    <header class="bg-[#eceff4]/20 backdrop-blur-md p-4 shadow-2xl border-b border-white/20 sticky top-0 z-50 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
+    <!-- Notificación Flotante (Toast) -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 bg-emerald-900/90 text-white border border-emerald-400/40 px-5 py-3 rounded-lg shadow-2xl backdrop-blur-md hidden transition-all duration-300 transform translate-y-2">
+        <div class="flex items-center gap-3">
+            <span class="text-xl">✅</span>
+            <div>
+                <p class="font-bold text-sm">¡Información Copiada!</p>
+                <p class="text-xs text-emerald-200">En el chat de WhatsApp solo da clic derecho/mantén presionado y selecciona <b>Pegar</b>.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Encabezado Principal -->
+    <header class="bg-[#eceff4]/20 backdrop-blur-md p-4 shadow-2xl border-b border-white/20 sticky top-0 z-40 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
         <div class="hidden lg:block"></div>
         
         <div class="text-center">
@@ -44,14 +55,17 @@
 
     <div class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         
-        <!-- FORMULARIO - Movimiento Dinámico al pasar cursor (Hover) y usarlo -->
+        <!-- FORMULARIO -->
         <div class="bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl space-y-4 h-fit border border-white/20 transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
-            <!-- Encabezado del Formulario -->
             <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
                 <h2 class="text-lg font-semibold text-gray-100 tracking-wide">REGISTRO DE MATERIAL</h2>
             </div>
             
             <form id="materialForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-200">OF (Orden de Fabricación)</label>
+                    <input type="text" id="ofNumber" placeholder="Ej. OF-2024-001" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 uppercase font-mono focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-200">Número de Parte</label>
                     <input type="text" id="partNumber" placeholder="Ej. PART-1029-X" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 uppercase font-mono focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
@@ -87,9 +101,8 @@
             </form>
         </div>
 
-        <!-- TABLA - Movimiento Dinámico al pasar cursor (Hover) -->
+        <!-- TABLA -->
         <div class="lg:col-span-2 bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl border border-white/20 flex flex-col transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
-            <!-- Encabezado de la Tabla -->
             <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
                 <h2 class="text-lg font-semibold text-gray-100 tracking-wide">ALUMINIO - FIBRA DE VIDRIO</h2>
             </div>
@@ -101,6 +114,7 @@
                             <th class="px-4 py-3 text-center w-12">
                                 <input type="checkbox" id="selectAllRows" onchange="alternarTodosLosCheckboxes(this)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer transition-transform active:scale-90">
                             </th>
+                            <th class="px-4 py-3 text-amber-300 font-bold">OF (Editable)</th>
                             <th class="px-4 py-3 text-gray-100 font-bold">No. Parte</th>
                             <th class="px-4 py-3 text-gray-100 font-bold">Descripción</th>
                             <th class="px-4 py-3 text-gray-100 font-bold">Artículo</th>
@@ -110,7 +124,7 @@
                     </thead>
                     <tbody id="materialsTableBody" class="divide-y divide-white/15">
                         <tr id="noDataRow">
-                            <td colspan="6" class="px-4 py-12 text-center text-gray-300 italic">No hay registros cargados en este momento.</td>
+                            <td colspan="7" class="px-4 py-12 text-center text-gray-300 italic">No hay registros cargados en este momento.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -123,16 +137,16 @@
         const tableBody = document.getElementById('materialsTableBody');
         const noDataRow = document.getElementById('noDataRow');
         
-        // 1. CARGAR DATOS PERSISTENTES DE LOCALSTORAGE
+        // Carga de datos con guardado en tiempo real
         let materialsList = JSON.parse(localStorage.getItem('inventarioMateriales')) || [];
-        const numeroDestino = "Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
+        
+        // Enlace del Grupo de WhatsApp
+        const enlaceGrupoWhatsApp = "https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
 
-        // RENDERIZAR TABLA INICIALMENTE AL CARGAR LA PÁGINA
         document.addEventListener('DOMContentLoaded', () => {
             renderTabla();
         });
 
-        // 2. FUNCIÓN AUXILIAR PARA GUARDAR EN LOCALSTORAGE
         function guardarEnLocalStorage() {
             localStorage.setItem('inventarioMateriales', JSON.stringify(materialsList));
         }
@@ -141,6 +155,7 @@
             e.preventDefault();
             const newMaterial = {
                 id: Date.now(),
+                ofNumber: document.getElementById('ofNumber').value.trim().toUpperCase(),
                 partNumber: document.getElementById('partNumber').value.trim().toUpperCase(),
                 description: document.getElementById('matDescription').value.trim(),
                 article: document.getElementById('matArticle').value.trim(),
@@ -149,10 +164,10 @@
                 selected: false
             };
             materialsList.push(newMaterial);
-            guardarEnLocalStorage(); // <-- Guardar cambios
+            guardarEnLocalStorage();
             renderTabla();
             form.reset();
-            document.getElementById('partNumber').focus();
+            document.getElementById('ofNumber').focus();
         });
 
         function renderTabla() {
@@ -170,6 +185,9 @@
                     <td class="px-4 py-3.5 text-center">
                         <input type="checkbox" ${mat.selected ? 'checked' : ''} onchange="cambiarSeleccionFila(${mat.id}, this.checked)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer">
                     </td>
+                    <td class="px-4 py-2">
+                        <input type="text" value="${mat.ofNumber || ''}" onchange="actualizarOF(${mat.id}, this.value)" class="bg-black/40 border border-amber-500/30 focus:border-amber-400 text-amber-300 font-mono text-xs font-bold rounded px-2 py-1 w-28 uppercase focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all" title="Haz clic para editar la OF">
+                    </td>
                     <td class="px-4 py-3.5 font-mono text-xs font-bold text-blue-300">${mat.partNumber}</td>
                     <td class="px-4 py-3.5 text-gray-100">${mat.description}</td>
                     <td class="px-4 py-3.5 text-gray-200">${mat.article}</td>
@@ -180,17 +198,27 @@
             });
         }
 
+        function actualizarOF(id, nuevoValor) {
+            const index = materialsList.findIndex(m => m.id === id);
+            if (index !== -1) {
+                materialsList[index].ofNumber = nuevoValor.trim().toUpperCase();
+                guardarEnLocalStorage();
+            }
+        }
+
         function cambiarSeleccionFila(id, isChecked) {
             const index = materialsList.findIndex(m => m.id === id);
             if(index !== -1) materialsList[index].selected = isChecked;
             const todosMarcados = materialsList.length > 0 && materialsList.every(m => m.selected);
             document.getElementById('selectAllRows').checked = todosMarcados;
+            guardarEnLocalStorage();
             renderTabla();
         }
 
         function alternarTodosLosCheckboxes(masterCheckbox) {
             const status = masterCheckbox.checked;
             materialsList.forEach(m => m.selected = status);
+            guardarEnLocalStorage();
             renderTabla();
         }
 
@@ -202,24 +230,38 @@
             }
             if(confirm(`¿Deseas eliminar los ${seleccionados} elementos seleccionados?`)) {
                 materialsList = materialsList.filter(m => !m.selected);
-                guardarEnLocalStorage(); // <-- Guardar cambios al eliminar
+                guardarEnLocalStorage();
                 renderTabla();
             }
+        }
+
+        function mostrarNotificacion() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-2');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 4500);
         }
 
         function enviarPorWhatsApp() {
             const itemsAEnviar = materialsList.filter(m => m.selected);
             
             if (itemsAEnviar.length === 0) {
-                alert("Por favor selecciona las casillas (checkboxes) de los materiales que deseas enviar por WhatsApp.");
+                alert("Por favor selecciona la casilla (checkbox) de al menos un material para enviar.");
                 return;
             }
 
-            let mensaje = `📋*Solicitud De Material*\n`;
+            let mensaje = `📋 *SOLICITUD DE MATERIALES*\n`;
             mensaje += `=============================\n\n`;
 
             itemsAEnviar.forEach((mat, index) => {
                 mensaje += `*Item #${index + 1}*\n`;
+                mensaje += `🔸 *OF:* ${mat.ofNumber || 'N/A'}\n`;
                 mensaje += `🔹 *No. Parte:* ${mat.partNumber}\n`;
                 mensaje += `🔹 *Descripción:* ${mat.description}\n`;
                 mensaje += `🔹 *Artículo:* ${mat.article}\n`;
@@ -227,9 +269,17 @@
                 mensaje += `-----------------------------\n`;
             });
 
-            const mensajeCodificado = encodeURIComponent(mensaje);
-            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${numeroDestino}&text=${mensajeCodificado}`;
-            window.open(urlWhatsApp, '_blank');
+            // Copia al portapapeles, muestra aviso visual y abre el enlace del grupo
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(mensaje).then(() => {
+                    mostrarNotificacion();
+                    window.open(enlaceGrupoWhatsApp, '_blank');
+                }).catch(() => {
+                    window.open(enlaceGrupoWhatsApp, '_blank');
+                });
+            } else {
+                window.open(enlaceGrupoWhatsApp, '_blank');
+            }
         }
 
         async function exportarSeleccionadosAExcel() {
@@ -242,7 +292,7 @@
             const sheet = workbook.addWorksheet('Materiales Seleccionados');
             const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1F2937' } };
             const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-            const headers = ["Número de Parte", "Descripción", "Artículo / Categoría", "Cantidad", "Unidad de Medida"];
+            const headers = ["OF", "Número de Parte", "Descripción", "Artículo / Categoría", "Cantidad", "Unidad de Medida"];
             
             sheet.getRow(2).height = 25;
             headers.forEach((h, index) => {
@@ -255,19 +305,20 @@
             itemsAExportar.forEach((mat) => {
                 const row = sheet.getRow(currentRow);
                 row.height = 20;
-                const values = [mat.partNumber, mat.description, mat.article, mat.quantity, mat.uom];
+                const values = [mat.ofNumber || '', mat.partNumber, mat.description, mat.article, mat.quantity, mat.uom];
                 values.forEach((val, index) => {
                     const cell = row.getCell(index + 2);
                     cell.value = val; cell.font = { name: 'Arial', size: 10 };
                     cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
-                    if (index === 3) { cell.alignment = { horizontal: 'right' }; cell.numFormat = '#,##0.00'; }
-                    else if (index === 4) cell.alignment = { horizontal: 'center' };
+                    if (index === 4) { cell.alignment = { horizontal: 'right' }; cell.numFormat = '#,##0.00'; }
+                    else if (index === 0 || index === 5) cell.alignment = { horizontal: 'center' };
                     else cell.alignment = { horizontal: 'left' };
                 });
                 currentRow++;
             });
-            sheet.getColumn(2).width = 20; sheet.getColumn(3).width = 35; sheet.getColumn(4).width = 22;
-            sheet.getColumn(5).width = 15; sheet.getColumn(6).width = 18; sheet.getColumn(1).width = 4;
+            sheet.getColumn(2).width = 16; sheet.getColumn(3).width = 20; sheet.getColumn(4).width = 35;
+            sheet.getColumn(5).width = 22; sheet.getColumn(6).width = 15; sheet.getColumn(7).width = 18;
+            sheet.getColumn(1).width = 4;
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), "Reporte_Materiales.xlsx");
         }
