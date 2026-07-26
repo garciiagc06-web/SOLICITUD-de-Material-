@@ -27,41 +27,39 @@
         </div>
     </div>
 
-    <!-- Modal Flotante de Edición (Doble Clic) -->
-    <div id="editModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4 transform transition-all">
-            <div class="flex justify-between items-center border-b border-white/10 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">✏️ Editar Registro</h3>
-                <button onclick="cerrarModalEditar()" class="text-gray-400 hover:text-white text-xl font-bold p-1">&times;</button>
+    <!-- Modal Flotante de Registro de Material (Ajustado y Compacto) -->
+    <div id="registerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-5 space-y-3 transform transition-all">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">📦 INGRESO DE MATERIAL</h3>
+                <button type="button" onclick="cerrarModalRegistro()" class="text-gray-400 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
             </div>
             
-            <form id="editForm" onsubmit="guardarEdicionModal(event)" class="space-y-3">
-                <input type="hidden" id="editModalId">
+            <form id="materialForm" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-amber-300">OF (Orden de Fabricación)</label>
-                    <input type="text" id="editModalOF" class="mt-1 block w-full rounded-md bg-black/60 border border-amber-500/40 text-amber-300 p-2 uppercase font-mono text-sm focus:outline-none focus:border-amber-400" required>
-                    <span class="text-[10px] text-gray-400">Nota: Al cambiar la OF aquí, se actualizará en todos los registros.</span>
+                    <label class="block text-xs font-medium text-gray-300">OF (Orden de Fabricación)</label>
+                    <input type="text" id="ofNumber" placeholder="Ej. OF-2024-001" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs uppercase font-mono focus:border-white/40 focus:bg-black/80 focus:outline-none transition-all" required>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-300">Número de Parte</label>
-                    <input type="text" id="editModalPart" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-blue-300 p-2 uppercase font-mono text-sm focus:outline-none focus:border-blue-400" required>
+                    <input type="text" id="partNumber" placeholder="Ej. PART-1029-X" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-blue-300 font-mono p-2 text-xs uppercase focus:border-blue-400 focus:outline-none transition-all" required>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-300">Descripción</label>
-                    <input type="text" id="editModalDesc" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40" required>
+                    <input type="text" id="matDescription" placeholder="Ej. Leg brace Izquierdo R y L" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:border-white/40 focus:outline-none transition-all" required>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-300">Artículo / Categoría</label>
-                    <input type="text" id="editModalArticle" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40" required>
+                    <input type="text" id="matArticle" placeholder="Ej. Remaches, Varillas, Perfiles" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:border-white/40 focus:outline-none transition-all" required>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2.5">
                     <div>
                         <label class="block text-xs font-medium text-gray-300">Cantidad</label>
-                        <input type="number" id="editModalQty" min="0" step="any" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-emerald-400 font-bold p-2 text-sm focus:outline-none focus:border-emerald-400" required>
+                        <input type="number" id="matQuantity" min="0" step="any" placeholder="100" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-emerald-400 font-bold p-2 text-xs focus:border-emerald-400 focus:outline-none transition-all" required>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-300">Unidad de Medida</label>
-                        <select id="editModalUom" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-sm focus:outline-none focus:border-white/40">
+                        <select id="matUom" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:border-white/40 focus:outline-none transition-all">
                             <option value="Pallet">Pallet</option>
                             <option value="PZ">Pieza (PZ)</option>
                             <option value="KG">Kilogramo (KG)</option>
@@ -70,9 +68,60 @@
                     </div>
                 </div>
                 
-                <div class="pt-4 flex justify-end gap-3 border-t border-white/10">
-                    <button type="button" onclick="cerrarModalEditar()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded-md text-xs transition-all">Cancelar</button>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-md text-xs transition-all shadow-md">Guardar Cambios</button>
+                <div class="pt-3 flex justify-end gap-2 border-t border-white/10">
+                    <button type="button" onclick="cerrarModalRegistro()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-1.5 px-3 rounded-md text-xs transition-all">Cancelar</button>
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-3 rounded-md text-xs transition-all shadow-md">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Flotante de Edición (Doble Clic) -->
+    <div id="editModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-5 space-y-3 transform transition-all">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">✏️ Editar Registro</h3>
+                <button onclick="cerrarModalEditar()" class="text-gray-400 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
+            </div>
+            
+            <form id="editForm" onsubmit="guardarEdicionModal(event)" class="space-y-3">
+                <input type="hidden" id="editModalId">
+                <div>
+                    <label class="block text-xs font-medium text-amber-300">OF (Orden de Fabricación)</label>
+                    <input type="text" id="editModalOF" class="mt-1 block w-full rounded-md bg-black/60 border border-amber-500/40 text-amber-300 p-2 uppercase font-mono text-xs focus:outline-none focus:border-amber-400" required>
+                    <span class="text-[10px] text-gray-400">Nota: Al cambiar la OF aquí, se actualizará en todos los registros.</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Número de Parte</label>
+                    <input type="text" id="editModalPart" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-blue-300 p-2 uppercase font-mono text-xs focus:outline-none focus:border-blue-400" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Descripción</label>
+                    <input type="text" id="editModalDesc" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:outline-none focus:border-white/40" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-300">Artículo / Categoría</label>
+                    <input type="text" id="editModalArticle" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:outline-none focus:border-white/40" required>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300">Cantidad</label>
+                        <input type="number" id="editModalQty" min="0" step="any" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-emerald-400 font-bold p-2 text-xs focus:outline-none focus:border-emerald-400" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-300">Unidad de Medida</label>
+                        <select id="editModalUom" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs focus:outline-none focus:border-white/40">
+                            <option value="Pallet">Pallet</option>
+                            <option value="PZ">Pieza (PZ)</option>
+                            <option value="KG">Kilogramo (KG)</option>
+                            <option value="MTS">Metros (MTS)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="pt-3 flex justify-end gap-2 border-t border-white/10">
+                    <button type="button" onclick="cerrarModalEditar()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-1.5 px-3 rounded-md text-xs transition-all">Cancelar</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-1.5 px-3 rounded-md text-xs transition-all shadow-md">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -104,58 +153,20 @@
         </div>
     </header>
 
-    <div class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        
-        <!-- FORMULARIO -->
-        <div class="bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl space-y-4 h-fit border border-white/20 transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
-            <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
-                <h2 class="text-lg font-semibold text-gray-100 tracking-wide">REGISTRO DE MATERIAL</h2>
-            </div>
+    <div class="max-w-7xl mx-auto p-4 mt-6">
+        <!-- TABLA -->
+        <div class="w-full bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl border border-white/20 flex flex-col transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
             
-            <form id="materialForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-200">OF (Orden de Fabricación)</label>
-                    <input type="text" id="ofNumber" placeholder="Ej. OF-2024-001" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 uppercase font-mono focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-200">Número de Parte</label>
-                    <input type="text" id="partNumber" placeholder="Ej. PART-1029-X" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 uppercase font-mono focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-200">Descripción</label>
-                    <input type="text" id="matDescription" placeholder="Ej. Leg brace Izquierdo R y L" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-200">Artículo / Categoría</label>
-                    <input type="text" id="matArticle" placeholder="Ej. Remaches, Varillas, Perfiles" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-200">Cantidad</label>
-                        <input type="number" id="matQuantity" min="0" step="any" placeholder="100" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200" required>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-200">Unidad de Medida</label>
-                        <select id="matUom" class="mt-1 block w-full rounded-md bg-black/45 border border-white/10 text-gray-100 p-2.5 focus:border-white/40 focus:bg-black/70 focus:scale-[1.01] focus:outline-none transition-all duration-200">
-                            <option value="Pallet">Pallet</option>
-                            <option value="PZ">Pieza (PZ)</option>
-                            <option value="KG">Kilogramo (KG)</option>
-                            <option value="MTS">Metros (MTS)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-white/15 hover:bg-white/25 text-white font-semibold py-2.5 px-4 rounded-md border border-white/30 transition shadow-md duration-300 transform active:scale-95">
-                        REGISTRAR
+            <!-- Banner Encabezado con Título Centrado y Botón Abajo -->
+            <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 space-y-3">
+                <h2 class="text-lg font-semibold text-gray-100 tracking-wide text-center">ALUMINIO - FIBRA DE VIDRIO</h2>
+                
+                <div class="flex justify-start">
+                    <!-- Botón Negro Ajustado al Ancho del Texto -->
+                    <button onclick="abrirModalRegistro()" class="bg-black hover:bg-gray-900 text-white font-semibold py-1.5 px-3 rounded-md border border-white/20 shadow-md hover:border-white/40 transform hover:scale-105 active:scale-95 transition-all duration-300 text-xs flex items-center gap-1.5 w-fit">
+                        ➕ INGRESO DE MATERIAL
                     </button>
                 </div>
-            </form>
-        </div>
-
-        <!-- TABLA -->
-        <div class="lg:col-span-2 bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl border border-white/20 flex flex-col transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
-            <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 text-center">
-                <h2 class="text-lg font-semibold text-gray-100 tracking-wide">ALUMINIO - FIBRA DE VIDRIO</h2>
             </div>
             
             <div class="overflow-x-auto rounded border border-white/15 mt-2">
@@ -200,6 +211,17 @@
             localStorage.setItem('inventarioMateriales', JSON.stringify(materialsList));
         }
 
+        /* --- FUNCIONES DEL MODAL FLOTANTE DE REGISTRO --- */
+        function abrirModalRegistro() {
+            document.getElementById('registerModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('ofNumber').focus(), 100);
+        }
+
+        function cerrarModalRegistro() {
+            document.getElementById('registerModal').classList.add('hidden');
+            form.reset();
+        }
+
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const newMaterial = {
@@ -215,8 +237,7 @@
             materialsList.push(newMaterial);
             guardarEnLocalStorage();
             renderTabla();
-            form.reset();
-            document.getElementById('ofNumber').focus();
+            cerrarModalRegistro();
         });
 
         function renderTabla() {
