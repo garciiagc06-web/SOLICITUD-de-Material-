@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
-        /* Reflejo brillante superior sobre el fondo negro oscuro */
         .brillante-bg {
             background-image: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.07) 0%, rgba(5,5,6,1) 70%);
         }
@@ -27,7 +26,7 @@
         </div>
     </div>
 
-    <!-- Modal Flotante de Registro de Material (Ajustado y Compacto) -->
+    <!-- Modal Flotante de Registro de Material -->
     <div id="registerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-5 space-y-3 transform transition-all">
             <div class="flex justify-between items-center border-b border-white/10 pb-2">
@@ -76,7 +75,7 @@
         </div>
     </div>
 
-    <!-- Modal Flotante de Edición (Doble Clic) -->
+    <!-- Modal Flotante de Edición -->
     <div id="editModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-5 space-y-3 transform transition-all">
             <div class="flex justify-between items-center border-b border-white/10 pb-2">
@@ -89,7 +88,7 @@
                 <div>
                     <label class="block text-xs font-medium text-amber-300">OF (Orden de Fabricación)</label>
                     <input type="text" id="editModalOF" class="mt-1 block w-full rounded-md bg-black/60 border border-amber-500/40 text-amber-300 p-2 uppercase font-mono text-xs focus:outline-none focus:border-amber-400" required>
-                    <span class="text-[10px] text-gray-400">Nota: Al cambiar la OF aquí, se actualizará en todos los registros.</span>
+                    <span class="text-[10px] text-gray-400">Nota: Al cambiar la OF aquí, se actualizará en todos los registros en la nube.</span>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-300">Número de Parte</label>
@@ -130,23 +129,16 @@
     <!-- Encabezado Principal -->
     <header class="bg-[#eceff4]/20 backdrop-blur-md p-4 shadow-2xl border-b border-white/20 sticky top-0 z-40 grid grid-cols-1 lg:grid-cols-3 items-center gap-4">
         <div class="hidden lg:block"></div>
-        
         <div class="text-center">
             <h1 class="text-2xl font-bold tracking-wider text-white drop-shadow-[0_2px_10px_rgba(255,255,255,0.15)]">SOLICITUD DE MATERIAL</h1>
         </div>
-        
         <div class="flex flex-wrap gap-3 w-full lg:w-auto justify-center lg:justify-end">
-            <!-- Botón Eliminar: Rojo Cristalino -->
             <button onclick="eliminarSeleccionados()" class="bg-rose-950/30 hover:bg-rose-700/80 text-rose-300 hover:text-white font-medium py-2 px-4 rounded-md border border-rose-500/25 hover:border-rose-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
                 🗑️ ELIMINAR
             </button>
-            
-            <!-- Botón Solicitar: Verde Cristalino -->
             <button onclick="enviarPorWhatsApp()" class="bg-emerald-950/30 hover:bg-emerald-600/80 text-emerald-300 hover:text-white font-semibold py-2 px-4 rounded-md border border-emerald-500/25 hover:border-emerald-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center gap-1.5">
                 📱 SOLICITAR
             </button>
-            
-            <!-- Botón Exportar: Azul Cristalino -->
             <button onclick="exportarSeleccionadosAExcel()" class="bg-blue-950/30 hover:bg-blue-600/80 text-blue-300 hover:text-white font-semibold py-2 px-4 rounded-md border border-blue-500/25 hover:border-blue-400/50 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center gap-1">
                 📊 EXPORTAR
             </button>
@@ -154,15 +146,10 @@
     </header>
 
     <div class="max-w-7xl mx-auto p-4 mt-6">
-        <!-- TABLA -->
         <div class="w-full bg-[#eceff4]/25 backdrop-blur-md p-6 rounded-lg shadow-2xl border border-white/20 flex flex-col transform hover:-translate-y-1 hover:shadow-white/5 hover:border-white/35 transition-all duration-300 ease-out">
-            
-            <!-- Banner Encabezado con Título Centrado y Botón Abajo -->
             <div class="bg-[#eceff4]/20 backdrop-blur-sm -mx-6 -mt-6 p-4 rounded-t-lg border-b border-white/20 mb-4 space-y-3">
                 <h2 class="text-lg font-semibold text-gray-100 tracking-wide text-center">ALUMINIO - FIBRA DE VIDRIO</h2>
-                
                 <div class="flex justify-start">
-                    <!-- Botón Negro Ajustado al Ancho del Texto -->
                     <button onclick="abrirModalRegistro()" class="bg-black hover:bg-gray-900 text-white font-semibold py-1.5 px-3 rounded-md border border-white/20 shadow-md hover:border-white/40 transform hover:scale-105 active:scale-95 transition-all duration-300 text-xs flex items-center gap-1.5 w-fit">
                         ➕ INGRESO DE MATERIAL
                     </button>
@@ -186,7 +173,7 @@
                     </thead>
                     <tbody id="materialsTableBody" class="divide-y divide-white/15">
                         <tr id="noDataRow">
-                            <td colspan="7" class="px-4 py-12 text-center text-gray-300 italic">No hay registros cargados en este momento.</td>
+                            <td colspan="7" class="px-4 py-12 text-center text-gray-300 italic">Cargando registros desde la nube...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -194,56 +181,84 @@
         </div>
     </div>
 
-    <script>
+    <!-- INTEGRACIÓN CON FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            doc, 
+            onSnapshot, 
+            writeBatch 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CREDENCIALES REALES DE TU PROYECTO
+        const firebaseConfig = {
+            apiKey: "AIzaSyDzidxRJ19iRdYfhr1Pxz0BoM68seqV_aw",
+            authDomain: "database-78f5d.firebaseapp.com",
+            projectId: "database-78f5d",
+            storageBucket: "database-78f5d.firebasestorage.app",
+            messagingSenderId: "367564418382",
+            appId: "1:367564418382:web:73e9f84aca045d8fbb421f",
+            measurementId: "G-5121PLXXZM"
+        };
+
+        // Inicializar Firebase y Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const inventarioCol = collection(db, "inventarioMateriales");
+
+        let materialsList = [];
+        const enlaceGrupoWhatsApp = "https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0";
         const form = document.getElementById('materialForm');
         const tableBody = document.getElementById('materialsTableBody');
-        const noDataRow = document.getElementById('noDataRow');
-        
-        let materialsList = JSON.parse(localStorage.getItem('inventarioMateriales')) || [];
-        
-        const enlaceGrupoWhatsApp = "https://chat.whatsapp.com/LZlhg6Z4FMqDt5DAxs8k5r?s=sh&p=a&ilr=0"; 
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // ESCUCHAR CAMBIOS EN TIEMPO REAL (SINCRONIZACIÓN)
+        onSnapshot(inventarioCol, (snapshot) => {
+            materialsList = snapshot.docs.map(docSnapshot => ({
+                id: docSnapshot.id,
+                ...docSnapshot.data()
+            }));
             renderTabla();
         });
 
-        function guardarEnLocalStorage() {
-            localStorage.setItem('inventarioMateriales', JSON.stringify(materialsList));
-        }
-
-        /* --- FUNCIONES DEL MODAL FLOTANTE DE REGISTRO --- */
-        function abrirModalRegistro() {
+        // FUNCIONALIDADES EXPORTADAS AL ÁMBITO GLOBAL
+        window.abrirModalRegistro = () => {
             document.getElementById('registerModal').classList.remove('hidden');
             setTimeout(() => document.getElementById('ofNumber').focus(), 100);
-        }
+        };
 
-        function cerrarModalRegistro() {
+        window.cerrarModalRegistro = () => {
             document.getElementById('registerModal').classList.add('hidden');
             form.reset();
-        }
+        };
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
             const newMaterial = {
-                id: Date.now(),
                 ofNumber: document.getElementById('ofNumber').value.trim().toUpperCase(),
                 partNumber: document.getElementById('partNumber').value.trim().toUpperCase(),
                 description: document.getElementById('matDescription').value.trim(),
                 article: document.getElementById('matArticle').value.trim(),
                 quantity: parseFloat(document.getElementById('matQuantity').value),
                 uom: document.getElementById('matUom').value,
-                selected: false
+                selected: false,
+                timestamp: Date.now()
             };
-            materialsList.push(newMaterial);
-            guardarEnLocalStorage();
-            renderTabla();
+
+            await addDoc(inventarioCol, newMaterial);
             cerrarModalRegistro();
         });
 
         function renderTabla() {
             if (materialsList.length === 0) {
-                tableBody.innerHTML = '';
-                tableBody.appendChild(noDataRow);
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-4 py-12 text-center text-gray-300 italic">No hay registros cargados en este momento.</td>
+                    </tr>`;
                 document.getElementById('selectAllRows').checked = false;
                 return;
             }
@@ -252,12 +267,11 @@
                 const tr = document.createElement('tr');
                 tr.className = (mat.selected ? 'bg-white/25 text-white font-medium' : 'hover:bg-white/10 transition-colors duration-150') + ' cursor-pointer select-none';
                 
-                // EVENTO DE DOBLE CLIC PARA ABRIR EL MODAL DE EDICIÓN
                 tr.ondblclick = () => abrirModalEditar(mat.id);
 
                 tr.innerHTML = `
                     <td class="px-3 py-3.5 text-center" onclick="event.stopPropagation()">
-                        <input type="checkbox" ${mat.selected ? 'checked' : ''} onchange="cambiarSeleccionFila(${mat.id}, this.checked)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer">
+                        <input type="checkbox" ${mat.selected ? 'checked' : ''} onchange="cambiarSeleccionFila('${mat.id}', this.checked)" class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-white/20 focus:ring-blue-500 cursor-pointer">
                     </td>
                     <td class="px-2 py-2" onclick="event.stopPropagation()">
                         <input type="text" value="${mat.ofNumber || ''}" onchange="actualizarTodasLasOFs(this.value)" class="bg-black/40 border border-amber-500/30 focus:border-amber-400 text-amber-300 font-mono text-xs font-bold rounded px-1.5 py-1 w-20 uppercase focus:outline-none focus:ring-1 focus:ring-amber-400/50 transition-all" title="OF del registro (al cambiarla, se actualizarán todas)">
@@ -272,8 +286,7 @@
             });
         }
 
-        /* --- FUNCIONES DEL MODAL FLOTANTE (EDITAR CON DOBLE CLIC) --- */
-        function abrirModalEditar(id) {
+        window.abrirModalEditar = (id) => {
             const item = materialsList.find(m => m.id === id);
             if (!item) return;
 
@@ -286,99 +299,83 @@
             document.getElementById('editModalUom').value = item.uom;
 
             document.getElementById('editModal').classList.remove('hidden');
-        }
+        };
 
-        function cerrarModalEditar() {
+        window.cerrarModalEditar = () => {
             document.getElementById('editModal').classList.add('hidden');
-        }
+        };
 
-        function guardarEdicionModal(e) {
+        window.guardarEdicionModal = async (e) => {
             e.preventDefault();
-            const id = parseInt(document.getElementById('editModalId').value);
-            const index = materialsList.findIndex(m => m.id === id);
+            const id = document.getElementById('editModalId').value;
+            const nuevaOF = document.getElementById('editModalOF').value.trim().toUpperCase();
 
-            if (index !== -1) {
-                const nuevaOF = document.getElementById('editModalOF').value.trim().toUpperCase();
-                
-                // Actualizar los datos del ítem
-                materialsList[index].partNumber = document.getElementById('editModalPart').value.trim().toUpperCase();
-                materialsList[index].description = document.getElementById('editModalDesc').value.trim();
-                materialsList[index].article = document.getElementById('editModalArticle').value.trim();
-                materialsList[index].quantity = parseFloat(document.getElementById('editModalQty').value);
-                materialsList[index].uom = document.getElementById('editModalUom').value;
-
-                // Si se cambió la OF, se propaga a todos los registros
-                actualizarTodasLasOFs(nuevaOF);
-
-                guardarEnLocalStorage();
-                renderTabla();
-                cerrarModalEditar();
-            }
-        }
-
-        // ACTUALIZA LA OF EN TODOS LOS REGISTROS A LA VEZ
-        function actualizarTodasLasOFs(nuevoValor) {
-            const valorFormateado = nuevoValor.trim().toUpperCase();
-            materialsList.forEach(m => {
-                m.ofNumber = valorFormateado;
+            const docRef = doc(db, "inventarioMateriales", id);
+            await updateDoc(docRef, {
+                partNumber: document.getElementById('editModalPart').value.trim().toUpperCase(),
+                description: document.getElementById('editModalDesc').value.trim(),
+                article: document.getElementById('editModalArticle').value.trim(),
+                quantity: parseFloat(document.getElementById('editModalQty').value),
+                uom: document.getElementById('editModalUom').value
             });
-            guardarEnLocalStorage();
-            renderTabla();
-        }
 
-        function cambiarSeleccionFila(id, isChecked) {
-            const index = materialsList.findIndex(m => m.id === id);
-            if(index !== -1) materialsList[index].selected = isChecked;
-            const todosMarcados = materialsList.length > 0 && materialsList.every(m => m.selected);
-            document.getElementById('selectAllRows').checked = todosMarcados;
-            guardarEnLocalStorage();
-            renderTabla();
-        }
+            await actualizarTodasLasOFs(nuevaOF);
+            cerrarModalEditar();
+        };
 
-        function alternarTodosLosCheckboxes(masterCheckbox) {
+        window.actualizarTodasLasOFs = async (nuevoValor) => {
+            const valorFormateado = nuevoValor.trim().toUpperCase();
+            const batch = writeBatch(db);
+            
+            materialsList.forEach(m => {
+                const docRef = doc(db, "inventarioMateriales", m.id);
+                batch.update(docRef, { ofNumber: valorFormateado });
+            });
+
+            await batch.commit();
+        };
+
+        window.cambiarSeleccionFila = async (id, isChecked) => {
+            const docRef = doc(db, "inventarioMateriales", id);
+            await updateDoc(docRef, { selected: isChecked });
+        };
+
+        window.alternarTodosLosCheckboxes = async (masterCheckbox) => {
             const status = masterCheckbox.checked;
-            materialsList.forEach(m => m.selected = status);
-            guardarEnLocalStorage();
-            renderTabla();
-        }
+            const batch = writeBatch(db);
 
-        function eliminarSeleccionados() {
-            const seleccionados = materialsList.filter(m => m.selected).length;
-            if (seleccionados === 0) {
+            materialsList.forEach(m => {
+                const docRef = doc(db, "inventarioMateriales", m.id);
+                batch.update(docRef, { selected: status });
+            });
+
+            await batch.commit();
+        };
+
+        window.eliminarSeleccionados = async () => {
+            const seleccionados = materialsList.filter(m => m.selected);
+            if (seleccionados.length === 0) {
                 alert("Por favor selecciona primero las casillas de los artículos.");
                 return;
             }
-            if(confirm(`¿Deseas eliminar los ${seleccionados} elementos seleccionados?`)) {
-                materialsList = materialsList.filter(m => !m.selected);
-                guardarEnLocalStorage();
-                renderTabla();
+            if(confirm(`¿Deseas eliminar los ${seleccionados.length} elementos seleccionados?`)) {
+                const batch = writeBatch(db);
+                seleccionados.forEach(m => {
+                    const docRef = doc(db, "inventarioMateriales", m.id);
+                    batch.delete(docRef);
+                });
+                await batch.commit();
             }
-        }
+        };
 
-        function mostrarNotificacion() {
-            const toast = document.getElementById('toastNotification');
-            toast.classList.remove('hidden');
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2');
-            }, 10);
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-2');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }, 4500);
-        }
-
-        function enviarPorWhatsApp() {
+        window.enviarPorWhatsApp = () => {
             const itemsAEnviar = materialsList.filter(m => m.selected);
-            
             if (itemsAEnviar.length === 0) {
-                alert("Por favor selecciona la casilla (checkbox) de al menos un material para enviar.");
+                alert("Por favor selecciona la casilla de al menos un material para enviar.");
                 return;
             }
 
-            let mensaje = `📋 *SOLICITUD DE MATERIALES*\n`;
-            mensaje += `=============================\n\n`;
-
+            let mensaje = `📋 *SOLICITUD DE MATERIALES*\n=============================\n\n`;
             itemsAEnviar.forEach((mat, index) => {
                 mensaje += `*Item #${index + 1}*\n`;
                 mensaje += `🔸 *OF:* ${mat.ofNumber || 'N/A'}\n`;
@@ -399,9 +396,9 @@
             } else {
                 window.open(enlaceGrupoWhatsApp, '_blank');
             }
-        }
+        };
 
-        async function exportarSeleccionadosAExcel() {
+        window.exportarSeleccionadosAExcel = async () => {
             const itemsAExportar = materialsList.filter(m => m.selected);
             if (itemsAExportar.length === 0) {
                 alert("No has seleccionado ningún artículo para exportar.");
@@ -440,6 +437,16 @@
             sheet.getColumn(1).width = 4;
             const buffer = await workbook.xlsx.writeBuffer();
             saveAs(new Blob([buffer]), "Reporte_Materiales.xlsx");
+        };
+
+        function mostrarNotificacion() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-2'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-2');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 4500);
         }
     </script>
 </body>
