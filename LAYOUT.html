@@ -178,33 +178,6 @@
         </div>
     </div>
 
-    <!-- VENTANA FLOTANTE 2: LIBRERÍA DE DISEÑOS GUARDADOS -->
-    <div id="libraryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">📂 Librería de Diseños Guardados</h3>
-                <button onclick="closeLibraryModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Selecciona un proyecto</label>
-                    <select id="librarySelect" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm">
-                        <option value="">-- Selecciona un diseño --</option>
-                    </select>
-                </div>
-                <div class="flex items-center justify-between pt-3 border-t border-gray-700/60">
-                    <button type="button" onclick="eliminarDisenoSeleccionado()" class="bg-red-600/80 hover:bg-red-500 text-white font-semibold py-2 px-3 rounded-md border border-red-400/30 text-sm flex items-center gap-1">
-                        🗑️ Borrar
-                    </button>
-                    <div class="flex space-x-2">
-                        <button onclick="closeLibraryModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-3 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
-                        <button onclick="cargarDisenoSeleccionado()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 text-sm">Cargar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- VENTANA FLOTANTE DE EDICIÓN DIRECTA -->
     <div id="inlineEditPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-xl relative animate-in fade-in zoom-in duration-200">
@@ -270,14 +243,11 @@
     <!-- Encabezado -->
     <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
         <div class="flex items-center justify-center md:justify-start space-x-2">
-            <button type="button" onclick="nuevoDiseno()" class="bg-amber-600/80 hover:bg-amber-500 text-white font-semibold py-2 px-3 rounded-md border border-amber-400/30 text-xs flex items-center gap-1 shadow-md">
+            <button type="button" onclick="nuevoDiseno()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                 📄 Nuevo
             </button>
-            <button type="button" onclick="openSaveModal()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-md border border-indigo-400/30 text-xs flex items-center gap-1 shadow-md">
+            <button type="button" onclick="openSaveModal()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                 💾 Guardar
-            </button>
-            <button type="button" onclick="openLibraryModal()" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/30 text-xs flex items-center gap-1 shadow-md">
-                📂 Abrir
             </button>
         </div>
         <div class="text-center">
@@ -353,7 +323,7 @@
                     <label class="block text-xs font-semibold">10. Ancho Columnas</label>
                     <div class="flex space-x-1 mt-1">
                         <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
-                        <button type="submit" id="submitBtn" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-1.5 px-3 rounded-md border border-blue-400/30 text-xs">Agregar</button>
+                        <button type="submit" id="submitBtn" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs shadow-md">Agregar</button>
                         <button type="button" id="cancelBtn" class="hidden bg-gray-500/80 hover:bg-gray-400 text-white font-semibold py-1.5 px-3 rounded-md border border-gray-400/30 text-xs" onclick="resetFormState()">X</button>
                     </div>
                 </div>
@@ -365,25 +335,18 @@
             <div class="flex flex-wrap justify-between items-center mb-2 gap-3">
                 <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
                 
-                <!-- Desplegables alimentados automáticamente desde la Sección 1 -->
+                <!-- Opciones de cuadrícula y gestión de proyectos guardados -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-1.5 px-3 rounded-md border border-cyan-400/30 text-xs">
+                    <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs shadow-md">
                         Ocultar Cuadrícula
                     </button>
-                    
-                    <select id="filterArea" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
-                        <option value="">-- Toda Área / Línea --</option>
+
+                    <select id="filterModelo" onchange="cargarDisenoDesdeModelo(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
+                        <option value="">-- Seleccionar Proyecto --</option>
                     </select>
 
-                    <select id="filterModelo" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
-                        <option value="">-- Todo Modelo --</option>
-                    </select>
-
-                    <button type="button" onclick="ejecutarBusqueda()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-1.5 px-3 rounded-md border border-indigo-400/30 text-xs flex items-center gap-1">
-                        🔍 Buscar
-                    </button>
-                    <button type="button" onclick="limpiarBusqueda()" class="bg-gray-600/80 hover:bg-gray-500 text-white font-semibold py-1.5 px-2 rounded-md border border-gray-400/30 text-xs" title="Limpiar filtro">
-                        ✕
+                    <button type="button" onclick="eliminarProyectoSeleccionado()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs flex items-center gap-1 shadow-md">
+                        🗑️ Borrar
                     </button>
                 </div>
             </div>
@@ -434,164 +397,55 @@
             pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' }
         };
 
-        // --- FUNCIONES PARA POBLAR LOS DESPLEGABLES DESDE LA SECCIÓN 1 ---
+        // --- FUNCIONES PARA POBLAR EL DESPLEGABLE DE PROYECTOS ---
         function actualizarDesplegablesFiltro() {
-            const filterArea = document.getElementById('filterArea');
             const filterModelo = document.getElementById('filterModelo');
+            const valorActual = filterModelo.value;
 
-            const areaSeleccionada = filterArea.value;
-            const modeloSeleccionado = filterModelo.value;
-
-            const areas = new Set();
-            const modelos = new Set();
-
-            Object.values(database).forEach(item => {
-                if (item.area && item.area !== '-') areas.add(item.area);
-                if (item.modelo && item.modelo !== '-') modelos.add(item.modelo);
-            });
-
-            filterArea.innerHTML = '<option value="">-- Toda Área / Línea --</option>';
-            Array.from(areas).sort().forEach(a => {
+            filterModelo.innerHTML = '<option value="">-- Seleccionar Proyecto --</option>';
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            Object.keys(savedLibrary).sort().forEach(name => {
                 const opt = document.createElement('option');
-                opt.value = a;
-                opt.textContent = a;
-                if (a === areaSeleccionada) opt.selected = true;
-                filterArea.appendChild(opt);
-            });
-
-            filterModelo.innerHTML = '<option value="">-- Todo Modelo --</option>';
-            Array.from(modelos).sort().forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.textContent = m;
-                if (m === modeloSeleccionado) opt.selected = true;
+                opt.value = name;
+                opt.textContent = name;
+                if (name === valorActual) opt.selected = true;
                 filterModelo.appendChild(opt);
             });
         }
 
-        function ejecutarBusqueda() {
-            const selectedArea = document.getElementById('filterArea').value.trim().toLowerCase();
-            const selectedModelo = document.getElementById('filterModelo').value.trim().toLowerCase();
+        // FUNCIÓN PARA ELIMINAR EL PROYECTO SELECCIONADO EN EL DESPLEGABLE
+        function eliminarProyectoSeleccionado() {
+            const filterModelo = document.getElementById('filterModelo');
+            const selectedProject = filterModelo.value;
 
-            if (!selectedArea && !selectedModelo) {
-                limpiarBusqueda();
+            if (!selectedProject) {
+                alert("Por favor selecciona un proyecto de la lista para borrar.");
                 return;
             }
 
-            Object.keys(database).forEach(id => {
-                const item = database[id];
-                const visualEl = document.getElementById(`visual-${id}`);
-                const rowEl = document.getElementById(`row-${id}`);
-                if (!visualEl) return;
+            if (confirm(`¿Estás seguro de que deseas eliminar el proyecto "${selectedProject}" de forma permanente?`)) {
+                const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+                delete savedLibrary[selectedProject];
+                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
 
-                const areaMatch = !selectedArea || (item.area && item.area.toLowerCase() === selectedArea);
-                const modeloMatch = !selectedModelo || (item.modelo && item.modelo.toLowerCase() === selectedModelo);
-
-                if (areaMatch && modeloMatch) {
-                    visualEl.classList.add('filter-highlight');
-                    visualEl.classList.remove('filter-dimmed');
-                    if (rowEl) rowEl.classList.add('bg-cyan-100/80');
-                } else {
-                    visualEl.classList.remove('filter-highlight');
-                    visualEl.classList.add('filter-dimmed');
-                    if (rowEl) rowEl.classList.remove('bg-cyan-100/80');
+                // Si el proyecto eliminado es el que está actualmente en el lienzo, limpiamos el espacio de trabajo
+                if (document.getElementById('currentDesignName').value === selectedProject) {
+                    canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
+                    inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+                    database = {};
+                    objectCount = 0;
+                    document.getElementById('currentDesignName').value = "";
+                    resetFormState();
                 }
-            });
-        }
 
-        function limpiarBusqueda() {
-            document.getElementById('filterArea').value = "";
-            document.getElementById('filterModelo').value = "";
-
-            Object.keys(database).forEach(id => {
-                const visualEl = document.getElementById(`visual-${id}`);
-                const rowEl = document.getElementById(`row-${id}`);
-                if (visualEl) {
-                    visualEl.classList.remove('filter-highlight', 'filter-dimmed');
-                }
-                if (rowEl) {
-                    rowEl.classList.remove('bg-cyan-100/80');
-                }
-            });
-        }
-
-        // --- MANEJO DE VENTANAS MODALES ---
-        function openSaveModal() {
-            document.getElementById('saveModal').classList.remove('hidden');
-        }
-
-        function closeSaveModal() {
-            document.getElementById('saveModal').classList.add('hidden');
-        }
-
-        function openLibraryModal() {
-            actualizarSelectLibreria();
-            document.getElementById('libraryModal').classList.remove('hidden');
-        }
-
-        function closeLibraryModal() {
-            document.getElementById('libraryModal').classList.add('hidden');
-        }
-
-        function actualizarSelectLibreria() {
-            const select = document.getElementById('librarySelect');
-            select.innerHTML = '<option value="">-- Selecciona un diseño --</option>';
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            Object.keys(savedLibrary).forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                select.appendChild(opt);
-            });
-        }
-
-        function nuevoDiseno() {
-            if (Object.keys(database).length > 0) {
-                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño?")) {
-                    return;
-                }
+                actualizarDesplegablesFiltro();
+                alert(`El proyecto "${selectedProject}" ha sido eliminado correctamente.`);
             }
-
-            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
-            
-            database = {};
-            objectCount = 0;
-            document.getElementById('currentDesignName').value = "";
-            document.getElementById('librarySelect').value = "";
-            resetFormState();
-            actualizarDesplegablesFiltro();
-            limpiarBusqueda();
         }
 
-        function guardarDisenoActual() {
-            const designName = document.getElementById('currentDesignName').value.trim();
-            if (!designName) {
-                alert("Por favor asigna un nombre al diseño antes de guardarlo.");
-                return;
-            }
-            if (Object.keys(database).length === 0) {
-                alert("No hay estaciones o elementos en el layout para guardar.");
-                return;
-            }
-
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            savedLibrary[designName] = {
-                database: database,
-                objectCount: objectCount
-            };
-            localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
-            actualizarSelectLibreria();
-            closeSaveModal();
-            alert(`¡Diseño "${designName}" guardado correctamente!`);
-        }
-
-        function cargarDisenoSeleccionado() {
-            const designName = document.getElementById('librarySelect').value;
-            if (!designName) {
-                alert("Por favor selecciona un diseño de la librería.");
-                return;
-            }
+        // FUNCIÓN QUE EJECUTA LA ACCIÓN DE ABRIR DESDE LA LISTA DESPLEGABLE DE PROYECTOS
+        function cargarDisenoDesdeModelo(designName) {
+            if (!designName) return;
 
             const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
             if (!savedLibrary[designName]) {
@@ -640,31 +494,59 @@
                 inventoryList.appendChild(row);
             });
 
-            closeLibraryModal();
             actualizarDesplegablesFiltro();
-            limpiarBusqueda();
             alert(`¡Diseño "${designName}" cargado con éxito!`);
         }
 
-        function eliminarDisenoSeleccionado() {
-            const designName = document.getElementById('librarySelect').value;
+        // --- MANEJO DE VENTANA MODAL DE GUARDADO ---
+        function openSaveModal() {
+            document.getElementById('saveModal').classList.remove('hidden');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.add('hidden');
+        }
+
+        function nuevoDiseno() {
+            if (Object.keys(database).length > 0) {
+                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño?")) {
+                    return;
+                }
+            }
+
+            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            
+            database = {};
+            objectCount = 0;
+            document.getElementById('currentDesignName').value = "";
+            resetFormState();
+            actualizarDesplegablesFiltro();
+        }
+
+        function guardarDisenoActual() {
+            const designName = document.getElementById('currentDesignName').value.trim();
             if (!designName) {
-                alert("Por favor selecciona un diseño para borrar.");
+                alert("Por favor asigna un nombre al diseño antes de guardarlo.");
+                return;
+            }
+            if (Object.keys(database).length === 0) {
+                alert("No hay estaciones o elementos en el layout para guardar.");
                 return;
             }
 
-            if (confirm(`¿Estás seguro de eliminar el diseño "${designName}"?`)) {
-                let savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-                delete savedLibrary[designName];
-                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
-                actualizarSelectLibreria();
-                document.getElementById('librarySelect').value = "";
-                alert("Diseño eliminado.");
-            }
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            savedLibrary[designName] = {
+                database: database,
+                objectCount: objectCount
+            };
+            localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
+            actualizarDesplegablesFiltro();
+            closeSaveModal();
+            alert(`¡Diseño "${designName}" guardado correctamente!`);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            actualizarSelectLibreria();
             actualizarDesplegablesFiltro();
         });
 
@@ -728,7 +610,6 @@
                 form.reset();
             }
 
-            // ACTUALIZA AUTOMÁTICAMENTE LAS LISTAS DESPLEGABLES DE LA SECCIÓN 2
             actualizarDesplegablesFiltro();
         });
 
@@ -937,7 +818,6 @@
             delete database[id];
             if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
             actualizarDesplegablesFiltro();
-            limpiarBusqueda();
         };
 
         async function exportarLayoutAExcel() {
