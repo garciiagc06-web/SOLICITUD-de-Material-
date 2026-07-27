@@ -34,7 +34,7 @@
             z-index: 1;
         }
 
-        /* Cuadrícula con tono considerablemente más bajito y sutil */
+        /* Cuadrícula con tono sutil */
         .grid-bg {
             background-size: 20px 20px;
             background-image: linear-gradient(to right, rgba(0, 139, 163, 0.18) 1px, transparent 1px),
@@ -92,24 +92,25 @@
             opacity: 1;
         }
 
-        /* Tirador Ancho (Derecha) */
-        .resizer-h {
-            right: 0; top: 0; bottom: 0; width: 12px; cursor: ew-resize;
-        }
-        /* Tirador Alto (Abajo) */
-        .resizer-v {
-            left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize;
-        }
-        /* Tirador Esquina (Ambos) */
+        .resizer-h { right: 0; top: 0; bottom: 0; width: 12px; cursor: ew-resize; }
+        .resizer-v { left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize; }
         .resizer-both {
             right: 0; bottom: 0; width: 14px; height: 14px; cursor: nwse-resize;
             border-top-left-radius: 4px;
         }
 
-        /* ==========================================================
-           DISEÑO CON SECCIONES EN GRIS CLARO Y TRANSPARENCIA APLICADA
-        ============================================================ */
-        
+        /* Estilos de atenuación y resalte para búsqueda */
+        .filter-highlight {
+            box-shadow: 0 0 15px 4px #00f0ff, 0 0 25px 8px rgba(0, 240, 255, 0.6) !important;
+            border-color: #00f0ff !important;
+            z-index: 30 !important;
+            opacity: 1 !important;
+        }
+
+        .filter-dimmed {
+            opacity: 0.25 !important;
+        }
+
         .seccion-cristalina {
             background: rgba(220, 224, 230, 0.29) !important;
             backdrop-filter: blur(14px);
@@ -132,7 +133,6 @@
             border-color: #2563eb !important;
         }
 
-        /* Forzar textos oscuros legibles dentro de las secciones gris claro */
         .seccion-cristalina h2, 
         .seccion-cristalina label, 
         .seccion-cristalina p {
@@ -158,17 +158,64 @@
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
 
-    <!-- VENTANA FLOTANTE DE EDICIÓN DIRECTA (MODAL SUPERIOR) -->
+    <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO -->
+    <div id="saveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-indigo-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-indigo-400 flex items-center gap-2">💾 Guardar Diseño</h3>
+                <button onclick="closeSaveModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Nombre del Proyecto</label>
+                    <input type="text" id="currentDesignName" placeholder="Ej. Planta_Norte_Linea1" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm focus:border-indigo-500">
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-gray-700/60">
+                    <button onclick="closeSaveModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
+                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar Proyecto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE 2: LIBRERÍA DE DISEÑOS GUARDADOS -->
+    <div id="libraryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">📂 Librería de Diseños Guardados</h3>
+                <button onclick="closeLibraryModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Selecciona un proyecto</label>
+                    <select id="librarySelect" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm">
+                        <option value="">-- Selecciona un diseño --</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between pt-3 border-t border-gray-700/60">
+                    <button type="button" onclick="eliminarDisenoSeleccionado()" class="bg-red-600/80 hover:bg-red-500 text-white font-semibold py-2 px-3 rounded-md border border-red-400/30 text-sm flex items-center gap-1">
+                        🗑️ Borrar
+                    </button>
+                    <div class="flex space-x-2">
+                        <button onclick="closeLibraryModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-3 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
+                        <button onclick="cargarDisenoSeleccionado()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 text-sm">Cargar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE DE EDICIÓN DIRECTA -->
     <div id="inlineEditPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-xl relative animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">Edicion de Informacion</h3>
+                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">Edición de Información</h3>
                 <button onclick="closeInlineEditor()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <input type="hidden" id="inlineId">
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Tipo de Zona</label>
+                    <label class="block text-xs text-gray-400 mb-1">1. Tipo de Zona Visual</label>
                     <select id="inlineType" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
                         <option value="trabajo">Maquinado</option>
                         <option value="operacional">Estación de Trabajo</option>
@@ -176,155 +223,138 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs text-gray-400 mb-1">Proceso</label>
-                    <input type="text" id="inlineProceso" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs text-gray-400 mb-1">Operación</label>
-                    <input type="text" id="inlineOperacion" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div class="grid grid-cols-3 gap-2 md:col-span-2">
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Estándar HR</label>
-                        <input type="text" id="inlineEstandar" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Ops. Req</label>
-                        <input type="number" id="inlineOpsReq" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
-                    </div>
-                    <div>
-                        <label class="block text-xs text-gray-400 mb-1">Ops. Act</label>
-                        <input type="number" id="inlineOpsAct" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-center text-gray-200 text-xs">
-                    </div>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-xs text-gray-400 mb-1">Área / Línea</label>
+                    <label class="block text-xs text-gray-400 mb-1">2. Área / Línea</label>
                     <input type="text" id="inlineArea" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
                 </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">3. Modelo</label>
+                    <input type="text" id="inlineModelo" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">4. Sub-Ensamble</label>
+                    <input type="text" id="inlineSubEnsamble" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">5. Medida</label>
+                    <input type="text" id="inlineMedida" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">6. Troquel / Estación</label>
+                    <input type="text" id="inlineTroquel" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">7. Estándar x Hora</label>
+                    <input type="text" id="inlineEstandar" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">8. Op. Requerido</label>
+                    <input type="number" id="inlineOpsReq" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">9. Largo Líneas</label>
+                    <input type="number" id="inlineLength" min="1" max="20" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">10. Ancho Columnas</label>
+                    <input type="number" id="inlineWidth" min="1" max="20" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
+                </div>
+
                 <div class="flex items-center justify-end space-x-3 md:col-span-2 pt-2 border-t border-gray-700/60">
-                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Cancelar</button>
-                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Actualizar Estación</button>
+                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 backdrop-blur-sm shadow-md text-sm">Cancelar</button>
+                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md text-sm">Actualizar Estación</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Encabezado Centrado y Balanceado con CSS Grid -->
-    <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-3 items-center">
-        <div></div>
+    <!-- Encabezado -->
+    <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+        <div class="flex items-center justify-center md:justify-start space-x-2">
+            <button type="button" onclick="nuevoDiseno()" class="bg-amber-600/80 hover:bg-amber-500 text-white font-semibold py-2 px-3 rounded-md border border-amber-400/30 text-xs flex items-center gap-1 shadow-md">
+                📄 Nuevo
+            </button>
+            <button type="button" onclick="openSaveModal()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-md border border-indigo-400/30 text-xs flex items-center gap-1 shadow-md">
+                💾 Guardar
+            </button>
+            <button type="button" onclick="openLibraryModal()" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/30 text-xs flex items-center gap-1 shadow-md">
+                📂 Abrir
+            </button>
+        </div>
         <div class="text-center">
             <h1 class="text-2xl font-bold tracking-wide text-gray-100">Diseñador de Layout Industrial</h1>
             <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
         </div>
-        <div class="flex justify-end items-center space-x-3">
-            <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm flex items-center space-x-1">
-                <span>📊 Exportar </span>
+        <div class="flex justify-center md:justify-end items-center space-x-3">
+            <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-sm flex items-center space-x-1">
+                <span>📊 Exportar</span>
             </button>
         </div>
     </header>
 
-    <!-- Contenedor Principal en Flujo Vertical -->
+    <!-- Contenedor Principal -->
     <div class="max-w-7xl mx-auto p-4 space-y-6">
 
-        <!-- LIBRERÍA DE DISEÑOS (GESTIÓN DE GUARDADO/CARGA/NUEVO) -->
-        <div class="seccion-cristalina p-4 rounded-lg shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center space-x-3 w-full md:w-auto flex-1">
-                <div class="flex-1">
-                    <label class="block text-xs font-semibold mb-1">Nombre del Procto</label>
-                    <input type="text" id="currentDesignName" placeholder="Ej. Planta_Norte_Linea1" class="input-animado w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-2 text-sm bacAZkdrop-blur-sm">
-                </div>
-                <div class="pt-5 flex space-x-2">
-                    <button type="button" onclick="nuevoDiseno()" class="bg-amber-600/80 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-md border border-amber-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm" title="Crear un diseño nuevo desde cero">
-                        📄 Nuevo
-                    </button>
-                    <button type="button" onclick="guardarDisenoActual()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
-                        💾 Guardar Diseño
-                    </button>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3 w-full md:w-auto flex-1 border-t md:border-t-0 md:border-l border-gray-400/40 pt-4 md:pt-0 md:pl-4">
-                <div class="flex-1">
-                    <label class="block text-xs font-semibold mb-1">Librería de Diseños Guardados</label>
-                    <select id="librarySelect" class="input-animado w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-2 text-sm backdrop-blur-sm">
-                        <option value="">-- Selecciona un diseño --</option>
-                    </select>
-                </div>
-                <div class="pt-5 flex space-x-2">
-                    <button type="button" onclick="cargarDisenoSeleccionado()" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
-                        📂 Cargar
-                    </button>
-                    <button type="button" onclick="eliminarDisenoSeleccionado()" class="bg-red-600/80 hover:bg-red-500 text-white font-semibold py-2 px-4 rounded-md border border-red-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
-                        🗑️ Borrar
-                    </button>
-                </div>
-            </div>
-        </div>
-        
         <!-- 1. FORMULARIO DE REGISTRO (CONTROL DE ESTACIÓN) -->
         <div class="seccion-cristalina p-4 rounded-lg shadow-lg">
             <h2 id="formTitle" class="text-lg font-semibold border-b border-gray-400/50 pb-2 mb-3">1. Control de Estación</h2>
-            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                 <input type="hidden" id="editingId" value="">
                 
-                <!-- Columna 1 -->
-                <div class="space-y-2">
-                    <div>
-                        <label class="block text-xs font-semibold">Tipo de Zona Visual</label>
-                        <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" onchange="sincronizarDatosEnVivo()">
-                            <option value="trabajo">Maquinado</option>
-                            <option value="operacional">Estación de Trabajo</option>
-                            <option value="pasillo">Pasillo / Tránsito</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold">Proceso</label>
-                        <input type="text" id="procProceso" placeholder="Ej. Ensamble de Escaleras" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
-                    </div>
-                </div>
-                
-                <!-- Columna 2 -->
-                <div class="space-y-2">
-                    <div>
-                        <label class="block text-xs font-semibold">Operación (Nombre Estación)</label>
-                        <input type="text" id="procOperacion" placeholder="Ej. Remachado de Peldaños" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-xs font-semibold">Largo (Líneas)</label>
-                            <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold">Ancho (Columnas)</label>
-                            <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()" required>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-xs font-semibold">1. Tipo de Zona Visual</label>
+                    <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                        <option value="trabajo">Maquinado</option>
+                        <option value="operacional">Estación de Trabajo</option>
+                        <option value="pasillo">Pasillo / Tránsito</option>
+                    </select>
                 </div>
 
-                <!-- Columna 3 -->
-                <div class="space-y-2">
-                    <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="block text-xs font-semibold">Estándar HR</label>
-                            <input type="text" id="procEstandar" placeholder="450" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold">Ops. Req.</label>
-                            <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold">Ops. Act.</label>
-                            <input type="number" id="procOpsAct" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
-                        </div>
-                    </div>
-                    <div class="flex space-x-2 items-end">
-                        <div class="flex-1">
-                            <label class="block text-xs font-semibold">Área / Línea</label>
-                            <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" oninput="sincronizarDatosEnVivo()">
-                        </div>
-                        <div class="flex space-x-1">
-                            <button type="submit" id="submitBtn" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">Agregar</button>
-                            <button type="button" id="cancelBtn" class="hidden bg-gray-500/80 hover:bg-gray-400 text-white font-semibold py-2 px-4 rounded-md border border-gray-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm" onclick="resetFormState()">X</button>
-                        </div>
+                <div>
+                    <label class="block text-xs font-semibold">2. Área / Línea</label>
+                    <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">3. Modelo</label>
+                    <input type="text" id="procModelo" placeholder="Ej. Mod-X1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">4. Sub-Ensamble</label>
+                    <input type="text" id="procSubEnsamble" placeholder="Ej. Base Inferior" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">5. Medida</label>
+                    <input type="text" id="procMedida" placeholder="Ej. 1/2 pulg" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">6. Troquel / Estación</label>
+                    <input type="text" id="procTroquel" placeholder="Ej. TR-01" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">7. Estándar x Hora</label>
+                    <input type="text" id="procEstandar" placeholder="Ej. 450" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">8. Op. Requerido</label>
+                    <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">9. Largo Líneas</label>
+                    <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold">10. Ancho Columnas</label>
+                    <div class="flex space-x-1 mt-1">
+                        <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
+                        <button type="submit" id="submitBtn" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-1.5 px-3 rounded-md border border-blue-400/30 text-xs">Agregar</button>
+                        <button type="button" id="cancelBtn" class="hidden bg-gray-500/80 hover:bg-gray-400 text-white font-semibold py-1.5 px-3 rounded-md border border-gray-400/30 text-xs" onclick="resetFormState()">X</button>
                     </div>
                 </div>
             </form>
@@ -332,11 +362,30 @@
 
         <!-- 2. VISTA PRELIMINAR -->
         <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full relative">
-            <div class="flex justify-between items-center mb-2">
+            <div class="flex flex-wrap justify-between items-center mb-2 gap-3">
                 <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
-                <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-2 px-4 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md transform hover:scale-105 active:scale-95 transition-all duration-300 text-sm">
-                    Ocultar Cuadrícula
-                </button>
+                
+                <!-- Desplegables alimentados automáticamente desde la Sección 1 -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-cyan-600/80 hover:bg-cyan-500 text-white font-semibold py-1.5 px-3 rounded-md border border-cyan-400/30 text-xs">
+                        Ocultar Cuadrícula
+                    </button>
+                    
+                    <select id="filterArea" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
+                        <option value="">-- Toda Área / Línea --</option>
+                    </select>
+
+                    <select id="filterModelo" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
+                        <option value="">-- Todo Modelo --</option>
+                    </select>
+
+                    <button type="button" onclick="ejecutarBusqueda()" class="bg-indigo-600/80 hover:bg-indigo-500 text-white font-semibold py-1.5 px-3 rounded-md border border-indigo-400/30 text-xs flex items-center gap-1">
+                        🔍 Buscar
+                    </button>
+                    <button type="button" onclick="limpiarBusqueda()" class="bg-gray-600/80 hover:bg-gray-500 text-white font-semibold py-1.5 px-2 rounded-md border border-gray-400/30 text-xs" title="Limpiar filtro">
+                        ✕
+                    </button>
+                </div>
             </div>
             <div id="plantCanvas" class="relative w-full h-[450px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
                 <!-- Objetos dinámicos -->
@@ -350,18 +399,19 @@
                 <table class="min-w-full divide-y divide-gray-300 text-left text-xs">
                     <thead class="bg-gray-200/70 text-gray-800 font-bold">
                         <tr>
-                            <th class="px-4 py-3">Proceso</th>
-                            <th class="px-4 py-3">Operación</th>
-                            <th class="px-4 py-3">Dim.</th>
-                            <th class="px-4 py-3">Estándar</th>
-                            <th class="px-4 py-3 text-center">Ops Req.</th>
-                            <th class="px-4 py-3 text-center">Ops Act.</th>
-                            <th class="px-4 py-3">Área</th>
-                            <th class="px-4 py-3 text-center">Acciones</th>
+                            <th class="px-3 py-3">Área / Línea</th>
+                            <th class="px-3 py-3">Modelo</th>
+                            <th class="px-3 py-3">Sub-Ensamble</th>
+                            <th class="px-3 py-3">Medida</th>
+                            <th class="px-3 py-3">Troquel / Estación</th>
+                            <th class="px-3 py-3 text-center">Estd. x Hr</th>
+                            <th class="px-3 py-3 text-center">Op. Req.</th>
+                            <th class="px-3 py-3 text-center">Dim.</th>
+                            <th class="px-3 py-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryList" class="divide-y divide-gray-200/60 text-gray-800">
-                        <tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>
+                        <tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -384,7 +434,105 @@
             pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' }
         };
 
-        // --- FUNCIONES DE LIBRERÍA / LOCALSTORAGE ---
+        // --- FUNCIONES PARA POBLAR LOS DESPLEGABLES DESDE LA SECCIÓN 1 ---
+        function actualizarDesplegablesFiltro() {
+            const filterArea = document.getElementById('filterArea');
+            const filterModelo = document.getElementById('filterModelo');
+
+            const areaSeleccionada = filterArea.value;
+            const modeloSeleccionado = filterModelo.value;
+
+            const areas = new Set();
+            const modelos = new Set();
+
+            Object.values(database).forEach(item => {
+                if (item.area && item.area !== '-') areas.add(item.area);
+                if (item.modelo && item.modelo !== '-') modelos.add(item.modelo);
+            });
+
+            filterArea.innerHTML = '<option value="">-- Toda Área / Línea --</option>';
+            Array.from(areas).sort().forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a;
+                opt.textContent = a;
+                if (a === areaSeleccionada) opt.selected = true;
+                filterArea.appendChild(opt);
+            });
+
+            filterModelo.innerHTML = '<option value="">-- Todo Modelo --</option>';
+            Array.from(modelos).sort().forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if (m === modeloSeleccionado) opt.selected = true;
+                filterModelo.appendChild(opt);
+            });
+        }
+
+        function ejecutarBusqueda() {
+            const selectedArea = document.getElementById('filterArea').value.trim().toLowerCase();
+            const selectedModelo = document.getElementById('filterModelo').value.trim().toLowerCase();
+
+            if (!selectedArea && !selectedModelo) {
+                limpiarBusqueda();
+                return;
+            }
+
+            Object.keys(database).forEach(id => {
+                const item = database[id];
+                const visualEl = document.getElementById(`visual-${id}`);
+                const rowEl = document.getElementById(`row-${id}`);
+                if (!visualEl) return;
+
+                const areaMatch = !selectedArea || (item.area && item.area.toLowerCase() === selectedArea);
+                const modeloMatch = !selectedModelo || (item.modelo && item.modelo.toLowerCase() === selectedModelo);
+
+                if (areaMatch && modeloMatch) {
+                    visualEl.classList.add('filter-highlight');
+                    visualEl.classList.remove('filter-dimmed');
+                    if (rowEl) rowEl.classList.add('bg-cyan-100/80');
+                } else {
+                    visualEl.classList.remove('filter-highlight');
+                    visualEl.classList.add('filter-dimmed');
+                    if (rowEl) rowEl.classList.remove('bg-cyan-100/80');
+                }
+            });
+        }
+
+        function limpiarBusqueda() {
+            document.getElementById('filterArea').value = "";
+            document.getElementById('filterModelo').value = "";
+
+            Object.keys(database).forEach(id => {
+                const visualEl = document.getElementById(`visual-${id}`);
+                const rowEl = document.getElementById(`row-${id}`);
+                if (visualEl) {
+                    visualEl.classList.remove('filter-highlight', 'filter-dimmed');
+                }
+                if (rowEl) {
+                    rowEl.classList.remove('bg-cyan-100/80');
+                }
+            });
+        }
+
+        // --- MANEJO DE VENTANAS MODALES ---
+        function openSaveModal() {
+            document.getElementById('saveModal').classList.remove('hidden');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.add('hidden');
+        }
+
+        function openLibraryModal() {
+            actualizarSelectLibreria();
+            document.getElementById('libraryModal').classList.remove('hidden');
+        }
+
+        function closeLibraryModal() {
+            document.getElementById('libraryModal').classList.add('hidden');
+        }
+
         function actualizarSelectLibreria() {
             const select = document.getElementById('librarySelect');
             select.innerHTML = '<option value="">-- Selecciona un diseño --</option>';
@@ -399,20 +547,21 @@
 
         function nuevoDiseno() {
             if (Object.keys(database).length > 0) {
-                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño? Asegúrate de haber guardado los cambios importantes.")) {
+                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño?")) {
                     return;
                 }
             }
 
-            // Limpiar canvas actual, base de datos, tabla y campo de nombre
             canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
             
             database = {};
             objectCount = 0;
             document.getElementById('currentDesignName').value = "";
             document.getElementById('librarySelect').value = "";
             resetFormState();
+            actualizarDesplegablesFiltro();
+            limpiarBusqueda();
         }
 
         function guardarDisenoActual() {
@@ -433,7 +582,8 @@
             };
             localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
             actualizarSelectLibreria();
-            alert(`¡Diseño "${designName}" guardado correctamente en tu librería!`);
+            closeSaveModal();
+            alert(`¡Diseño "${designName}" guardado correctamente!`);
         }
 
         function cargarDisenoSeleccionado() {
@@ -449,9 +599,8 @@
                 return;
             }
 
-            // Limpiar canvas actual y tabla
             canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
             
             database = savedLibrary[designName].database;
             objectCount = savedLibrary[designName].objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
@@ -462,7 +611,6 @@
                 currentEmptyRow.style.display = 'none';
             }
 
-            // Reconstruir elementos visuales y filas de tabla
             Object.keys(database).forEach(id => {
                 const obj = database[id];
                 const visualObj = document.createElement('div');
@@ -471,7 +619,7 @@
                 visualObj.style.top = `${obj.y || 20}px`;
                 
                 visualObj.innerHTML = `
-                    <div class="label-container truncate pointer-events-none">${obj.operacion}</div>
+                    <div class="label-container truncate pointer-events-none">${obj.troquel}</div>
                     <div class="resizer-h">&lt;&gt;</div>
                     <div class="resizer-v">&lt;&gt;</div>
                     <div class="resizer-both">&lt;&gt;</div>
@@ -488,10 +636,13 @@
 
                 const row = document.createElement('tr');
                 row.id = `row-${id}`;
-                row.innerHTML = generateRowHTML(id, obj.type, obj.proceso, obj.operacion, obj.width, obj.length, obj.estandar, obj.opsReq, obj.opsAct, obj.area);
+                row.innerHTML = generateRowHTML(id, obj.type, obj.area, obj.modelo, obj.subEnsamble, obj.medida, obj.troquel, obj.estandar, obj.opsReq, obj.length, obj.width);
                 inventoryList.appendChild(row);
             });
 
+            closeLibraryModal();
+            actualizarDesplegablesFiltro();
+            limpiarBusqueda();
             alert(`¡Diseño "${designName}" cargado con éxito!`);
         }
 
@@ -502,74 +653,52 @@
                 return;
             }
 
-            if (confirm(`¿Estás seguro de eliminar el diseño "${designName}" de tu librería?`)) {
+            if (confirm(`¿Estás seguro de eliminar el diseño "${designName}"?`)) {
                 let savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
                 delete savedLibrary[designName];
                 localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
                 actualizarSelectLibreria();
                 document.getElementById('librarySelect').value = "";
-                alert("Diseño eliminado de la librería.");
+                alert("Diseño eliminado.");
             }
         }
 
-        // Inicializar librería al cargar la página
         window.addEventListener('DOMContentLoaded', () => {
             actualizarSelectLibreria();
+            actualizarDesplegablesFiltro();
         });
 
         function toggleCuadricula() {
             canvas.classList.toggle('grid-hidden');
             const btn = document.getElementById('btnToggleGrid');
-            if (canvas.classList.contains('grid-hidden')) {
-                btn.innerText = "Mostrar Cuadrícula";
-            } else {
-                btn.innerText = "Ocultar Cuadrícula";
-            }
+            btn.innerText = canvas.classList.contains('grid-hidden') ? "Mostrar Cuadrícula" : "Ocultar Cuadrícula";
         }
 
-        function sincronizarDatosEnVivo() {
-            const editingId = document.getElementById('editingId').value;
-            if (!editingId) return;
-
-            const type = document.getElementById('zoneType').value;
-            const proceso = document.getElementById('procProceso').value;
-            const operacion = document.getElementById('procOperacion').value;
-            const length = parseInt(document.getElementById('zoneLength').value) || 1;
-            const width = parseInt(document.getElementById('zoneWidth').value) || 1;
-            const estandar = document.getElementById('procEstandar').value || '-';
-            const opsReq = document.getElementById('procOpsReq').value || '0';
-            const opsAct = document.getElementById('procOpsAct').value || '0';
-            const area = document.getElementById('procArea').value || '-';
-
-            database[editingId] = { ...database[editingId], type, proceso, operacion, length, width, estandar, opsReq, opsAct, area };
-            
-            updateVisualObject(editingId);
-            const rowElm = document.getElementById(`row-${editingId}`);
-            if (rowElm) {
-                rowElm.innerHTML = generateRowHTML(editingId, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area);
-            }
-        }
-
+        // --- SUBMIT DE LA SECCIÓN 1 (GUARDA/AGREGA DATOS Y ACTUALIZA DESPLEGABLES) ---
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const editingId = document.getElementById('editingId').value;
             const type = document.getElementById('zoneType').value;
-            const proceso = document.getElementById('procProceso').value;
-            const operacion = document.getElementById('procOperacion').value;
+            const area = document.getElementById('procArea').value.trim() || '-';
+            const modelo = document.getElementById('procModelo').value.trim() || '-';
+            const subEnsamble = document.getElementById('procSubEnsamble').value.trim() || '-';
+            const medida = document.getElementById('procMedida').value.trim() || '-';
+            const troquel = document.getElementById('procTroquel').value.trim();
+            const estandar = document.getElementById('procEstandar').value.trim() || '-';
+            const opsReq = document.getElementById('procOpsReq').value || '0';
             const length = parseInt(document.getElementById('zoneLength').value);
             const width = parseInt(document.getElementById('zoneWidth').value);
-            const estandar = document.getElementById('procEstandar').value || '-';
-            const opsReq = document.getElementById('procOpsReq').value || '0';
-            const opsAct = document.getElementById('procOpsAct').value || '0';
-            const area = document.getElementById('procArea').value || '-';
 
             if (editingId) {
+                database[editingId] = { ...database[editingId], type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width };
+                updateVisualObject(editingId);
+                document.getElementById(`row-${editingId}`).innerHTML = generateRowHTML(editingId, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width);
                 resetFormState();
             } else {
                 objectCount++;
                 const currentEmptyRow = document.getElementById('emptyRow');
                 if (currentEmptyRow) currentEmptyRow.style.display = 'none';
-                database[objectCount] = { type, proceso, operacion, length, width, estandar, opsReq, opsAct, area, x: 20, y: 20 };
+                database[objectCount] = { type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width, x: 20, y: 20 };
 
                 const visualObj = document.createElement('div');
                 visualObj.id = `visual-${objectCount}`;
@@ -577,7 +706,7 @@
                 visualObj.style.top = '20px';
                 
                 visualObj.innerHTML = `
-                    <div class="label-container truncate pointer-events-none">${operacion}</div>
+                    <div class="label-container truncate pointer-events-none">${troquel}</div>
                     <div class="resizer-h">&lt;&gt;</div>
                     <div class="resizer-v">&lt;&gt;</div>
                     <div class="resizer-both">&lt;&gt;</div>
@@ -585,7 +714,6 @@
                 
                 canvas.appendChild(visualObj);
                 updateVisualObject(objectCount);
-                
                 makeElementDraggableAndResizable(visualObj, objectCount);
                 
                 visualObj.addEventListener('dblclick', (e) => {
@@ -595,10 +723,13 @@
 
                 const row = document.createElement('tr');
                 row.id = `row-${objectCount}`;
-                row.innerHTML = generateRowHTML(objectCount, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area);
+                row.innerHTML = generateRowHTML(objectCount, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width);
                 inventoryList.appendChild(row);
                 form.reset();
             }
+
+            // ACTUALIZA AUTOMÁTICAMENTE LAS LISTAS DESPLEGABLES DE LA SECCIÓN 2
+            actualizarDesplegablesFiltro();
         });
 
         function updateVisualObject(id) {
@@ -616,19 +747,20 @@
             elm.className = `absolute cursor-move select-none p-1.5 ${currentConfig.bg} ${currentConfig.text} ${currentConfig.customBorder} ${currentConfig.extraClass} rounded draggable-item flex items-center justify-center text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 hover:z-20`;
             
             const label = elm.querySelector('.label-container');
-            if(label) label.innerText = obj.operacion;
+            if(label) label.innerText = obj.troquel;
         }
 
-        function generateRowHTML(id, type, proceso, operacion, width, length, estandar, opsReq, opsAct, area) {
+        function generateRowHTML(id, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width) {
             return `
-                <td class="px-4 py-3 font-semibold text-gray-900">${proceso}</td>
-                <td class="px-4 py-3 text-gray-800">${operacion}</td>
-                <td class="px-4 py-3 text-gray-600">${width}x${length}</td>
-                <td class="px-4 py-3 text-gray-600">${estandar}</td>
-                <td class="px-4 py-3 text-center text-gray-700">${opsReq}</td>
-                <td class="px-4 py-3 text-center text-gray-700">${opsAct}</td>
-                <td class="px-4 py-3 text-gray-600">${area}</td>
-                <td class="px-4 py-3 text-center space-x-2">
+                <td class="px-3 py-3 font-semibold text-gray-900">${area}</td>
+                <td class="px-3 py-3 text-gray-800">${modelo}</td>
+                <td class="px-3 py-3 text-gray-800">${subEnsamble}</td>
+                <td class="px-3 py-3 text-gray-800">${medida}</td>
+                <td class="px-3 py-3 font-semibold text-gray-900">${troquel}</td>
+                <td class="px-3 py-3 text-center text-gray-700">${estandar}</td>
+                <td class="px-3 py-3 text-center text-gray-700">${opsReq}</td>
+                <td class="px-3 py-3 text-center text-gray-600">${width}x${length}</td>
+                <td class="px-3 py-3 text-center space-x-2">
                     <button type="button" onclick="startEdit(${id})" class="text-blue-600 font-medium hover:underline">Editar</button>
                     <button type="button" onclick="removeObject(${id})" class="text-red-600 font-medium hover:underline">Borrar</button>
                 </td>
@@ -684,8 +816,9 @@
                     }
                     
                     document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
-                        id, database[id].type, database[id].proceso, database[id].operacion, 
-                        finalWidthBlocks, finalLengthBlocks, database[id].estandar, database[id].opsReq, database[id].opsAct, database[id].area
+                        id, database[id].type, database[id].area, database[id].modelo, database[id].subEnsamble,
+                        database[id].medida, database[id].troquel, database[id].estandar, database[id].opsReq,
+                        finalLengthBlocks, finalWidthBlocks
                     );
                 };
 
@@ -724,17 +857,19 @@
             };
         }
 
-        // Funciones para manejar la ventana flotante modal
         window.openInlineEditor = function(id) {
             const data = database[id];
             document.getElementById('inlineId').value = id;
             document.getElementById('inlineType').value = data.type;
-            document.getElementById('inlineProceso').value = data.proceso;
-            document.getElementById('inlineOperacion').value = data.operacion;
+            document.getElementById('inlineArea').value = data.area;
+            document.getElementById('inlineModelo').value = data.modelo;
+            document.getElementById('inlineSubEnsamble').value = data.subEnsamble;
+            document.getElementById('inlineMedida').value = data.medida;
+            document.getElementById('inlineTroquel').value = data.troquel;
             document.getElementById('inlineEstandar').value = data.estandar;
             document.getElementById('inlineOpsReq').value = data.opsReq;
-            document.getElementById('inlineOpsAct').value = data.opsAct;
-            document.getElementById('inlineArea').value = data.area;
+            document.getElementById('inlineLength').value = data.length;
+            document.getElementById('inlineWidth').value = data.width;
             
             document.getElementById('inlineEditPanel').classList.remove('hidden');
         };
@@ -748,33 +883,40 @@
             if(!id) return;
 
             database[id].type = document.getElementById('inlineType').value;
-            database[id].proceso = document.getElementById('inlineProceso').value;
-            database[id].operacion = document.getElementById('inlineOperacion').value;
-            database[id].estandar = document.getElementById('inlineEstandar').value || '-';
+            database[id].area = document.getElementById('inlineArea').value.trim() || '-';
+            database[id].modelo = document.getElementById('inlineModelo').value.trim() || '-';
+            database[id].subEnsamble = document.getElementById('inlineSubEnsamble').value.trim() || '-';
+            database[id].medida = document.getElementById('inlineMedida').value.trim() || '-';
+            database[id].troquel = document.getElementById('inlineTroquel').value.trim();
+            database[id].estandar = document.getElementById('inlineEstandar').value.trim() || '-';
             database[id].opsReq = document.getElementById('inlineOpsReq').value || '0';
-            database[id].opsAct = document.getElementById('inlineOpsAct').value || '0';
-            database[id].area = document.getElementById('inlineArea').value || '-';
+            database[id].length = parseInt(document.getElementById('inlineLength').value) || 1;
+            database[id].width = parseInt(document.getElementById('inlineWidth').value) || 1;
 
             updateVisualObject(id);
             document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
-                id, database[id].type, database[id].proceso, database[id].operacion, 
-                database[id].width, database[id].length, database[id].estandar, database[id].opsReq, database[id].opsAct, database[id].area
+                id, database[id].type, database[id].area, database[id].modelo, database[id].subEnsamble,
+                database[id].medida, database[id].troquel, database[id].estandar, database[id].opsReq,
+                database[id].length, database[id].width
             );
             closeInlineEditor();
+            actualizarDesplegablesFiltro();
         };
 
         window.startEdit = function(id) {
             const data = database[id];
             document.getElementById('editingId').value = id;
             document.getElementById('zoneType').value = data.type;
-            document.getElementById('procProceso').value = data.proceso;
-            document.getElementById('procOperacion').value = data.operacion;
-            document.getElementById('zoneLength').value = data.length;
-            document.getElementById('zoneWidth').value = data.width;
+            document.getElementById('procArea').value = data.area;
+            document.getElementById('procModelo').value = data.modelo;
+            document.getElementById('procSubEnsamble').value = data.subEnsamble;
+            document.getElementById('procMedida').value = data.medida;
+            document.getElementById('procTroquel').value = data.troquel;
             document.getElementById('procEstandar').value = data.estandar;
             document.getElementById('procOpsReq').value = data.opsReq;
-            document.getElementById('procOpsAct').value = data.opsAct;
-            document.getElementById('procArea').value = data.area;
+            document.getElementById('zoneLength').value = data.length;
+            document.getElementById('zoneWidth').value = data.width;
+
             document.getElementById('submitBtn').innerText = "Guardar";
             document.getElementById('cancelBtn').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -794,6 +936,8 @@
             if(row) row.remove();
             delete database[id];
             if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
+            actualizarDesplegablesFiltro();
+            limpiarBusqueda();
         };
 
         async function exportarLayoutAExcel() {
@@ -840,7 +984,7 @@
                 
                 sheet1.mergeCells(startRow, startCol, endRow, endCol);
                 const mainCell = sheet1.getRow(startRow).getCell(startCol);
-                mainCell.value = obj.operacion;
+                mainCell.value = obj.troquel;
                 mainCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: colorMap[obj.type].borderHex } };
                 mainCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
             });
@@ -849,7 +993,7 @@
             const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E1E24' } };
             const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
             
-            const headers = ["Proceso", "Operacion", "Estandar HR", "Operadores Requeridos", "Operadores Actuales", "Área"];
+            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble", "Medida", "Troquel / Estación", "Estándar x Hora", "Op. Requerido"];
             
             sheet2.getRow(2).height = 25;
             headers.forEach((h, index) => {
@@ -867,12 +1011,13 @@
                 row.height = 20;
 
                 const values = [
-                    obj.proceso,
-                    obj.operacion,
+                    obj.area,
+                    obj.modelo,
+                    obj.subEnsamble,
+                    obj.medida,
+                    obj.troquel,
                     obj.estandar,
-                    parseInt(obj.opsReq),
-                    parseInt(obj.opsAct),
-                    obj.area
+                    parseInt(obj.opsReq)
                 ];
 
                 values.forEach((val, index) => {
@@ -881,7 +1026,7 @@
                     cell.font = { name: 'Arial', size: 10 };
                     cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
                     
-                    if (index === 2 || index === 3 || index === 4) {
+                    if (index >= 5) {
                         cell.alignment = { horizontal: 'center', vertical: 'center' };
                     } else {
                         cell.alignment = { horizontal: 'left', vertical: 'center' };
@@ -891,7 +1036,7 @@
             });
 
             sheet2.columns.forEach((col, idx) => {
-                if(idx > 0) col.width = 24;
+                if(idx > 0) col.width = 20;
             });
             sheet2.getColumn(1).width = 4;
 

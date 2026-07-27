@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Librería jsQR para lectura de códigos desde la cámara -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <style>
         .brillante-bg {
             background-image: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.07) 0%, rgba(5,5,6,1) 70%);
@@ -26,6 +28,30 @@
         </div>
     </div>
 
+    <!-- Modal Flotante del Escáner QR -->
+    <div id="qrModal" class="fixed inset-0 z-[60] bg-black/90 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
+        <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-4 space-y-3 relative text-center">
+            <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">📷 ESCANEAR CÓDIGO QR</h3>
+                <button type="button" onclick="cerrarEscanerQR()" class="text-gray-400 hover:text-white text-xl font-bold p-1 leading-none">&times;</button>
+            </div>
+            
+            <!-- Visor de la cámara -->
+            <div class="relative w-full aspect-square bg-black rounded-lg overflow-hidden border border-white/10 flex items-center justify-center">
+                <video id="qrVideo" playsinline class="w-full h-full object-cover"></video>
+                <canvas id="qrCanvas" class="hidden"></canvas>
+                <!-- Cuadro guía visual -->
+                <div class="absolute w-48 h-48 border-2 border-emerald-400 border-dashed rounded-lg pointer-events-none animate-pulse"></div>
+            </div>
+
+            <p id="qrStatus" class="text-xs text-gray-400">Apunta la cámara al código QR...</p>
+            
+            <button type="button" onclick="cerrarEscanerQR()" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 rounded-md text-xs transition-all">
+                Cancelar
+            </button>
+        </div>
+    </div>
+
     <!-- Modal Flotante de Registro de Material -->
     <div id="registerModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="bg-[#121318] border border-white/20 rounded-lg shadow-2xl max-w-sm w-full p-5 space-y-3 transform transition-all">
@@ -35,6 +61,11 @@
             </div>
             
             <form id="materialForm" class="space-y-3">
+                <!-- Botón de Escáner QR integrado dentro del formulario -->
+                <button type="button" onclick="abrirEscanerQR()" class="w-full bg-GREEN-600/80 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-md text-xs transition-all shadow-md flex items-center justify-center gap-2 mb-2">
+                    📷 (QR)
+                </button>
+
                 <div>
                     <label class="block text-xs font-medium text-gray-300">OF (Orden de Fabricación)</label>
                     <input type="text" id="ofNumber" placeholder="Ej. OF-2024-001" class="mt-1 block w-full rounded-md bg-black/60 border border-white/15 text-gray-100 p-2 text-xs uppercase font-mono focus:border-white/40 focus:bg-black/80 focus:outline-none transition-all" required>
@@ -181,7 +212,7 @@
         </div>
     </div>
 
-    <!-- INTEGRACIÓN CON FIREBASE SDK -->
+    <!-- INTEGRACIÓN CON FIREBASE SDK & LÓGICA DEL ESCÁNER JSQR -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
@@ -216,7 +247,89 @@
         const form = document.getElementById('materialForm');
         const tableBody = document.getElementById('materialsTableBody');
 
-        // ESCUCHAR CAMBIOS EN TIEMPO REAL (SINCRONIZACIÓN)
+        // LÓGICA DE CONTROL DE LA CÁMARA Y JSQR
+        let videoStream = null;
+        let scanning = false;
+
+        window.abrirEscanerQR = async () => {
+            const modal = document.getElementById('qrModal');
+            const video = document.getElementById('qrVideo');
+            const status = document.getElementById('qrStatus');
+
+            modal.classList.remove('hidden');
+            status.innerText = "Iniciando cámara...";
+
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                video.srcObject = videoStream;
+                video.setAttribute("playsinline", true);
+                video.play();
+                
+                scanning = true;
+                requestAnimationFrame(escaneoQRFrame);
+            } catch (err) {
+                console.error("Error al acceder a la cámara:", err);
+                status.innerText = "❌ No se pudo acceder a la cámara.";
+            }
+        };
+
+        window.cerrarEscanerQR = () => {
+            scanning = false;
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            document.getElementById('qrModal').classList.add('hidden');
+        };
+
+        function escaneoQRFrame() {
+            if (!scanning) return;
+
+            const video = document.getElementById('qrVideo');
+            const canvas = document.getElementById('qrCanvas');
+            const context = canvas.getContext('2d');
+            const status = document.getElementById('qrStatus');
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.height = video.videoHeight;
+                canvas.width = video.videoWidth;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code && code.data) {
+                    status.innerText = "✅ ¡Código detectado!";
+                    procesarDatoQR(code.data);
+                    cerrarEscanerQR();
+                    return;
+                } else {
+                    status.innerText = "Buscando código QR...";
+                }
+            }
+            
+            requestAnimationFrame(escaneoQRFrame);
+        }
+
+        function procesarDatoQR(data) {
+            try {
+                const parsed = JSON.parse(data);
+                if (parsed.of) document.getElementById('ofNumber').value = parsed.of;
+                if (parsed.part) document.getElementById('partNumber').value = parsed.part;
+                if (parsed.desc) document.getElementById('matDescription').value = parsed.desc;
+                if (parsed.article) document.getElementById('matArticle').value = parsed.article;
+                if (parsed.qty) document.getElementById('matQuantity').value = parsed.qty;
+                if (parsed.uom) document.getElementById('matUom').value = parsed.uom;
+            } catch (e) {
+                document.getElementById('partNumber').value = data.trim().toUpperCase();
+            }
+        }
+
+        // ESCUCHAR CAMBIOS EN TIEMPO REAL (SINCRONIZACIÓN FIREBASE)
         onSnapshot(inventarioCol, (snapshot) => {
             materialsList = snapshot.docs.map(docSnapshot => ({
                 id: docSnapshot.id,
@@ -286,6 +399,33 @@
             });
         }
 
+        window.cambiarSeleccionFila = async (id, estado) => {
+            const docRef = doc(db, "inventarioMateriales", id);
+            await updateDoc(docRef, { selected: estado });
+        };
+
+        window.alternarTodosLosCheckboxes = async (masterCheckbox) => {
+            const estado = masterCheckbox.checked;
+            const batch = writeBatch(db);
+            materialsList.forEach(mat => {
+                const docRef = doc(db, "inventarioMateriales", mat.id);
+                batch.update(docRef, { selected: estado });
+            });
+            await batch.commit();
+        };
+
+        window.actualizarTodasLasOFs = async (nuevaOF) => {
+            const ofFormateada = nuevaOF.trim().toUpperCase();
+            if (!ofFormateada) return;
+
+            const batch = writeBatch(db);
+            materialsList.forEach(mat => {
+                const docRef = doc(db, "inventarioMateriales", mat.id);
+                batch.update(docRef, { ofNumber: ofFormateada });
+            });
+            await batch.commit();
+        };
+
         window.abrirModalEditar = (id) => {
             const item = materialsList.find(m => m.id === id);
             if (!item) return;
@@ -310,8 +450,12 @@
             const id = document.getElementById('editModalId').value;
             const nuevaOF = document.getElementById('editModalOF').value.trim().toUpperCase();
 
+            const batch = writeBatch(db);
+
+            // Actualizar el documento editado
             const docRef = doc(db, "inventarioMateriales", id);
-            await updateDoc(docRef, {
+            batch.update(docRef, {
+                ofNumber: nuevaOF,
                 partNumber: document.getElementById('editModalPart').value.trim().toUpperCase(),
                 description: document.getElementById('editModalDesc').value.trim(),
                 article: document.getElementById('editModalArticle').value.trim(),
@@ -319,49 +463,29 @@
                 uom: document.getElementById('editModalUom').value
             });
 
-            await actualizarTodasLasOFs(nuevaOF);
+            // Si cambió la OF, sincronizar con el resto de los registros
+            materialsList.forEach(mat => {
+                if (mat.id !== id) {
+                    const otherDocRef = doc(db, "inventarioMateriales", mat.id);
+                    batch.update(otherDocRef, { ofNumber: nuevaOF });
+                }
+            });
+
+            await batch.commit();
             cerrarModalEditar();
-        };
-
-        window.actualizarTodasLasOFs = async (nuevoValor) => {
-            const valorFormateado = nuevoValor.trim().toUpperCase();
-            const batch = writeBatch(db);
-            
-            materialsList.forEach(m => {
-                const docRef = doc(db, "inventarioMateriales", m.id);
-                batch.update(docRef, { ofNumber: valorFormateado });
-            });
-
-            await batch.commit();
-        };
-
-        window.cambiarSeleccionFila = async (id, isChecked) => {
-            const docRef = doc(db, "inventarioMateriales", id);
-            await updateDoc(docRef, { selected: isChecked });
-        };
-
-        window.alternarTodosLosCheckboxes = async (masterCheckbox) => {
-            const status = masterCheckbox.checked;
-            const batch = writeBatch(db);
-
-            materialsList.forEach(m => {
-                const docRef = doc(db, "inventarioMateriales", m.id);
-                batch.update(docRef, { selected: status });
-            });
-
-            await batch.commit();
         };
 
         window.eliminarSeleccionados = async () => {
             const seleccionados = materialsList.filter(m => m.selected);
             if (seleccionados.length === 0) {
-                alert("Por favor selecciona primero las casillas de los artículos.");
+                alert("Por favor, selecciona al menos un registro para eliminar.");
                 return;
             }
-            if(confirm(`¿Deseas eliminar los ${seleccionados.length} elementos seleccionados?`)) {
+
+            if (confirm(`¿Estás seguro de que deseas eliminar ${seleccionados.length} registro(s)?`)) {
                 const batch = writeBatch(db);
-                seleccionados.forEach(m => {
-                    const docRef = doc(db, "inventarioMateriales", m.id);
+                seleccionados.forEach(mat => {
+                    const docRef = doc(db, "inventarioMateriales", mat.id);
                     batch.delete(docRef);
                 });
                 await batch.commit();
@@ -369,85 +493,64 @@
         };
 
         window.enviarPorWhatsApp = () => {
-            const itemsAEnviar = materialsList.filter(m => m.selected);
-            if (itemsAEnviar.length === 0) {
-                alert("Por favor selecciona la casilla de al menos un material para enviar.");
+            const seleccionados = materialsList.filter(m => m.selected);
+            if (seleccionados.length === 0) {
+                alert("Selecciona al menos un material de la lista para solicitar.");
                 return;
             }
 
-            let mensaje = `📋 *SOLICITUD DE MATERIALES*\n=============================\n\n`;
-            itemsAEnviar.forEach((mat, index) => {
-                mensaje += `*Item #${index + 1}*\n`;
-                mensaje += `🔸 *OF:* ${mat.ofNumber || 'N/A'}\n`;
-                mensaje += `🔹 *No. Parte:* ${mat.partNumber}\n`;
-                mensaje += `🔹 *Descripción:* ${mat.description}\n`;
-                mensaje += `🔹 *Artículo:* ${mat.article}\n`;
-                mensaje += `🔹 *Cantidad:* ${mat.quantity.toLocaleString()} ${mat.uom}\n`;
-                mensaje += `-----------------------------\n`;
+            let mensaje = "📋 *SOLICITUD DE MATERIAL*\n\n";
+            seleccionados.forEach(mat => {
+                mensaje += `• *OF:* ${mat.ofNumber || 'N/A'}\n`;
+                mensaje += `  *Parte:* ${mat.partNumber}\n`;
+                mensaje += `  *Desc:* ${mat.description}\n`;
+                mensaje += `  *Cant:* ${mat.quantity} ${mat.uom}\n\n`;
             });
 
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(mensaje).then(() => {
-                    mostrarNotificacion();
-                    window.open(enlaceGrupoWhatsApp, '_blank');
-                }).catch(() => {
-                    window.open(enlaceGrupoWhatsApp, '_blank');
-                });
-            } else {
+            navigator.clipboard.writeText(mensaje).then(() => {
+                const toast = document.getElementById('toastNotification');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 4000);
                 window.open(enlaceGrupoWhatsApp, '_blank');
-            }
+            });
         };
 
         window.exportarSeleccionadosAExcel = async () => {
-            const itemsAExportar = materialsList.filter(m => m.selected);
+            const seleccionados = materialsList.filter(m => m.selected);
+            const itemsAExportar = seleccionados.length > 0 ? seleccionados : materialsList;
+
             if (itemsAExportar.length === 0) {
-                alert("No has seleccionado ningún artículo para exportar.");
+                alert("No hay datos para exportar.");
                 return;
             }
+
             const workbook = new ExcelJS.Workbook();
-            const sheet = workbook.addWorksheet('Materiales Seleccionados');
-            const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1F2937' } };
-            const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-            const headers = ["OF", "Número de Parte", "Descripción", "Artículo / Categoría", "Cantidad", "Unidad de Medida"];
-            
-            sheet.getRow(2).height = 25;
-            headers.forEach((h, index) => {
-                const cell = sheet.getRow(2).getCell(index + 2);
-                cell.value = h; cell.fill = headerFill; cell.font = headerFont;
-                cell.alignment = { horizontal: 'center', vertical: 'center' };
-            });
+            const worksheet = workbook.addWorksheet('Inventario');
 
-            let currentRow = 3;
-            itemsAExportar.forEach((mat) => {
-                const row = sheet.getRow(currentRow);
-                row.height = 20;
-                const values = [mat.ofNumber || '', mat.partNumber, mat.description, mat.article, mat.quantity, mat.uom];
-                values.forEach((val, index) => {
-                    const cell = row.getCell(index + 2);
-                    cell.value = val; cell.font = { name: 'Arial', size: 10 };
-                    cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
-                    if (index === 4) { cell.alignment = { horizontal: 'right' }; cell.numFormat = '#,##0.00'; }
-                    else if (index === 0 || index === 5) cell.alignment = { horizontal: 'center' };
-                    else cell.alignment = { horizontal: 'left' };
+            worksheet.columns = [
+                { header: 'OF', key: 'ofNumber', width: 15 },
+                { header: 'No. Parte', key: 'partNumber', width: 20 },
+                { header: 'Descripción', key: 'description', width: 30 },
+                { header: 'Artículo', key: 'article', width: 20 },
+                { header: 'Cantidad', key: 'quantity', width: 12 },
+                { header: 'U.M.', key: 'uom', width: 10 }
+            ];
+
+            itemsAExportar.forEach(item => {
+                worksheet.addRow({
+                    ofNumber: item.ofNumber || '',
+                    partNumber: item.partNumber,
+                    description: item.description,
+                    article: item.article,
+                    quantity: item.quantity,
+                    uom: item.uom
                 });
-                currentRow++;
             });
-            sheet.getColumn(2).width = 16; sheet.getColumn(3).width = 20; sheet.getColumn(4).width = 35;
-            sheet.getColumn(5).width = 22; sheet.getColumn(6).width = 15; sheet.getColumn(7).width = 18;
-            sheet.getColumn(1).width = 4;
-            const buffer = await workbook.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), "Reporte_Materiales.xlsx");
-        };
 
-        function mostrarNotificacion() {
-            const toast = document.getElementById('toastNotification');
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.remove('translate-y-2'), 10);
-            setTimeout(() => {
-                toast.classList.add('translate-y-2');
-                setTimeout(() => toast.classList.add('hidden'), 300);
-            }, 4500);
-        }
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `Solicitud_Materiales_${new Date().toISOString().slice(0,10)}.xlsx`);
+        };
     </script>
 </body>
 </html>
