@@ -142,32 +142,6 @@
             border-color: #2563eb !important;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
         }
-
-        .btn-firebase-save {
-            background-color: #0288d1;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-        .btn-firebase-save:hover { background-color: #0277bd; }
-
-        .btn-firebase-load {
-            background-color: #388e3c;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            transition: background 0.2s;
-        }
-        .btn-firebase-load:hover { background-color: #2e7d32; }
     </style>
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
@@ -176,7 +150,7 @@
     <div id="saveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-indigo-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-indigo-400 flex items-center gap-2">💾 Guardar Trabajo y Diseño</h3>
+                <h3 class="text-lg font-bold text-indigo-400 flex items-center gap-2">☁️ Guardar Trabajo y Diseño en la Nube</h3>
                 <button onclick="closeSaveModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
             </div>
             <div class="space-y-4">
@@ -190,7 +164,7 @@
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-3 border-t border-gray-700/60">
                     <button onclick="closeSaveModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
-                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar Local</button>
+                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar en Firebase</button>
                 </div>
             </div>
         </div>
@@ -351,7 +325,7 @@
             </div>
 
             <button type="button" onclick="openSaveModal()" class="bg-indigo-500/30 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-md border border-indigo-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
-                💾 Guardar Local
+                💾 Guardar Proyecto
             </button>
             <button type="button" onclick="openStationModal()" class="bg-cyan-500/30 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                 ➕ Ingresar
@@ -362,9 +336,6 @@
             <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
         </div>
         <div class="flex justify-center md:justify-end items-center space-x-2">
-            <!-- BOTONES DE FIREBASE -->
-            <button class="btn-firebase-save" onclick="guardarMiLayoutActual()">☁️ Guardar en Firebase</button>
-            <button class="btn-firebase-load" onclick="cargarMiLayoutGuardado()">📥 Cargar de Firebase</button>
             <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center space-x-1">
                 <span>📊 Exportar</span>
             </button>
@@ -438,6 +409,7 @@
         
         let database = {};
         let objectCount = 0;
+        let firebaseLibraryGlobal = {}; // Guardará la lista que viene de Firebase
         const scale = 20;
 
         const colorMap = {
@@ -536,17 +508,16 @@
         function openSaveModal() { document.getElementById('saveModal').classList.remove('hidden'); }
         function closeSaveModal() { document.getElementById('saveModal').classList.add('hidden'); }
 
+        // MÉTODOS CONECTADOS A FIREBASE PARA LOS DESPLEGABLES
         function actualizarDesplegablesFiltro() {
             const filterTrabajo = document.getElementById('filterTrabajo');
             const valorTrabajoActual = filterTrabajo.value;
 
             filterTrabajo.innerHTML = '<option value="">-- Seleccionar Trabajo --</option>';
             
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
             const trabajosUnicos = new Set();
-            
-            Object.keys(savedLibrary).forEach(key => {
-                const item = savedLibrary[key];
+            Object.keys(firebaseLibraryGlobal).forEach(key => {
+                const item = firebaseLibraryGlobal[key];
                 if (item.trabajo) trabajosUnicos.add(item.trabajo);
             });
 
@@ -567,10 +538,8 @@
 
             if (!trabajoSeleccionado) return;
 
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-
-            Object.keys(savedLibrary).forEach(key => {
-                const item = savedLibrary[key];
+            Object.keys(firebaseLibraryGlobal).forEach(key => {
+                const item = firebaseLibraryGlobal[key];
                 if (item.trabajo === trabajoSeleccionado) {
                     const opt = document.createElement('option');
                     opt.value = key;
@@ -584,8 +553,7 @@
             const key = document.getElementById('filterModelo').value;
             if (!key) return;
 
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            const item = savedLibrary[key];
+            const item = firebaseLibraryGlobal[key];
 
             if (!item) {
                 alert("El diseño seleccionado no existe.");
@@ -614,25 +582,9 @@
                 return;
             }
 
-            const storageKey = `${trabajo}___${modelo}`;
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            
-            savedLibrary[storageKey] = {
-                trabajo: trabajo,
-                modelo: modelo,
-                database: database,
-                objectCount: objectCount
-            };
-
-            localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
-            actualizarDesplegablesFiltro();
-            
-            document.getElementById('filterTrabajo').value = trabajo;
-            onTrabajoChange(trabajo);
-            document.getElementById('filterModelo').value = storageKey;
-
-            closeSaveModal();
-            alert(`¡Trabajo "${trabajo}" con Modelo "${modelo}" guardado localmente!`);
+            if (window.guardarLayoutEnFirebaseCloud) {
+                window.guardarLayoutEnFirebaseCloud(trabajo, modelo);
+            }
         }
 
         function eliminarProyectoSeleccionado() {
@@ -643,22 +595,14 @@
                 return;
             }
 
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            const item = savedLibrary[storageKey];
+            const item = firebaseLibraryGlobal[storageKey];
 
-            if (confirm(`¿Deseas eliminar el diseño con Modelo "${item.modelo}" del Trabajo "${item.trabajo}"?`)) {
-                delete savedLibrary[storageKey];
-                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
-
-                iniciarNuevoProyecto();
-                actualizarDesplegablesFiltro();
-                alert("El modelo seleccionado ha sido eliminado correctamente.");
+            if (confirm(`¿Deseas eliminar el diseño con Modelo "${item.modelo}" del Trabajo "${item.trabajo}" de la nube?`)) {
+                if(window.borrarLayoutDeFirebaseCloud) {
+                    window.borrarLayoutDeFirebaseCloud(storageKey);
+                }
             }
         }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            actualizarDesplegablesFiltro();
-        });
 
         function toggleCuadricula() {
             canvas.classList.toggle('grid-hidden');
@@ -1035,10 +979,10 @@
         }
     </script>
 
-    <!-- INTEGRACIÓN CON FIREBASE -->
+    <!-- INTEGRACIÓN CENTRALIZADA CON FIREBASE EN TIEMPO REAL -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAL1kcdZGBAaETrq2H6Qbwq-QEwzPIJ5WY",
@@ -1052,54 +996,53 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const layoutsCollection = collection(db, "industrial_layouts");
 
-        // Guardar Layout actual en Firebase
-        window.guardarMiLayoutActual = async function() {
-            if (Object.keys(database).length === 0) {
-                alert("⚠️ Agrega al menos una estación o recuadro al layout antes de guardar en Firebase.");
-                return;
-            }
+        // Escucha cambios en Firebase en tiempo real para que todos vean los mismos Trabajos/Modelos
+        onSnapshot(layoutsCollection, (snapshot) => {
+            firebaseLibraryGlobal = {};
+            snapshot.forEach((doc) => {
+                firebaseLibraryGlobal[doc.id] = doc.data();
+            });
+            actualizarDesplegablesFiltro();
+        }, (error) => {
+            console.error("Error escuchando Firebase:", error);
+        });
 
-            const trabajo = document.getElementById('currentTrabajoName').value.trim() || 'General';
-            const modelo = document.getElementById('currentModeloName').value.trim() || 'Principal';
-
+        // Guardar un modelo/trabajo específico en Firebase
+        window.guardarLayoutEnFirebaseCloud = async function(trabajo, modelo) {
+            const storageKey = `${trabajo}___${modelo}`;
             try {
-                await setDoc(doc(db, "layouts", "layout_planta_1"), { 
+                await setDoc(doc(db, "industrial_layouts", storageKey), {
                     trabajo: trabajo,
                     modelo: modelo,
-                    objectCount: objectCount,
                     database: database,
-                    fechaGuardado: new Date().toISOString()
+                    objectCount: objectCount,
+                    fechaActualizacion: new Date().toISOString()
                 });
-                alert("✅ Layout guardado correctamente en Firebase Cloud Storage");
+
+                closeSaveModal();
+                alert(`✅ ¡Trabajo "${trabajo}" (Modelo: ${modelo}) guardado exitosamente en la nube! Cualesquiera personas con el enlace lo podrán seleccionar.`);
+                
+                // Seleccionar automáticamente en los desplegables
+                document.getElementById('filterTrabajo').value = trabajo;
+                onTrabajoChange(trabajo);
+                document.getElementById('filterModelo').value = storageKey;
             } catch (error) {
-                console.error("Error guardando en Firebase:", error);
+                console.error("Error al guardar en Firebase:", error);
                 alert("❌ Error al guardar en Firebase: " + error.message);
             }
         };
 
-        // Cargar Layout desde Firebase
-        window.cargarMiLayoutGuardado = async function() {
+        // Borrar un modelo de Firebase
+        window.borrarLayoutDeFirebaseCloud = async function(storageKey) {
             try {
-                const docRef = doc(db, "layouts", "layout_planta_1");
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const dataCloud = docSnap.data();
-                    
-                    database = dataCloud.database || {};
-                    objectCount = dataCloud.objectCount || 0;
-                    document.getElementById('currentTrabajoName').value = dataCloud.trabajo || '';
-                    document.getElementById('currentModeloName').value = dataCloud.modelo || '';
-
-                    renderizarBaseDeDatosCompleta();
-                    alert("✅ Layout cargado exitosamente desde Firebase.");
-                } else {
-                    alert("⚠️ Aún no hay ningún layout guardado en la base de datos de Firebase.");
-                }
+                await deleteDoc(doc(db, "industrial_layouts", storageKey));
+                iniciarNuevoProyecto();
+                alert("🗑️ El modelo ha sido eliminado de la nube.");
             } catch (error) {
-                console.error("Error cargando desde Firebase:", error);
-                alert("❌ Error al cargar de Firebase: " + error.message);
+                console.error("Error borrando en Firebase:", error);
+                alert("❌ Error al borrar de Firebase: " + error.message);
             }
         };
     </script>
