@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Layout Industrial con Listado de Control Operativo</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Librerías de Excel requeridas para Spck Editor -->
+    <!-- Librerías de Excel requeridas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <style>
-        /* Fondo Negro Oscuro Brilloso con Efecto Glossy / Reflejo Gradiente Sutil */
         body {
             background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #050507 100%);
             background-attachment: fixed;
@@ -28,7 +28,6 @@
             z-index: 0;
         }
 
-        /* Asegurar que el header esté por encima de la vista preliminar para que el menú flotante no se tape */
         header {
             position: relative;
             z-index: 50;
@@ -39,21 +38,18 @@
             z-index: 1;
         }
 
-        /* Cuadrícula con tono sutil */
         .grid-bg {
             background-size: 20px 20px;
             background-image: linear-gradient(to right, rgba(0, 139, 163, 0.18) 1px, transparent 1px),
                               linear-gradient(to bottom, rgba(0, 139, 163, 0.18) 1px, transparent 1px);
         }
         
-        /* Clase para ocultar las cuadrículas */
         .grid-hidden {
             background-image: none !important;
         }
 
         .draggable-item { cursor: move; }
 
-        /* Estilo especial para la línea punteada central en pasillos */
         .pasillo-dinamico::after {
             content: "";
             position: absolute;
@@ -66,7 +62,7 @@
             z-index: 1;
             pointer-events: none;
         }
-        /* Asegura que el texto quede por encima de la línea del pasillo */
+
         .pasillo-dinamico div.label-container {
             position: relative;
             z-index: 2;
@@ -76,13 +72,11 @@
             color: #111827 !important;
         }
 
-        /* Estilo Glossy / Brillante para el tipo Texto */
         .texto-brillante {
             background: radial-gradient(circle at 50% 30%, #111827 0%, #030712 100%) !important;
             box-shadow: 0 0 12px rgba(0, 240, 255, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
         }
 
-        /* Tiradores de redimensión con los signos < > */
         .resizer-h, .resizer-v, .resizer-both {
             position: absolute;
             display: flex;
@@ -148,6 +142,32 @@
             border-color: #2563eb !important;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
         }
+
+        .btn-firebase-save {
+            background-color: #0288d1;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .btn-firebase-save:hover { background-color: #0277bd; }
+
+        .btn-firebase-load {
+            background-color: #388e3c;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        .btn-firebase-load:hover { background-color: #2e7d32; }
     </style>
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
@@ -170,7 +190,7 @@
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-3 border-t border-gray-700/60">
                     <button onclick="closeSaveModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
-                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar</button>
+                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar Local</button>
                 </div>
             </div>
         </div>
@@ -315,7 +335,7 @@
     <!-- Encabezado con z-index elevado -->
     <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4 relative z-50">
         <div class="flex items-center justify-center md:justify-start space-x-2 relative">
-            <!-- BOTÓN NUEVO CON MENÚ DESPLEGABLE Y SUPERPOSICIÓN ALTA -->
+            <!-- MENÚ NUEVO -->
             <div class="relative inline-block text-left">
                 <button type="button" onclick="toggleNuevoMenu(event)" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                     📄 Nuevo ▾
@@ -330,8 +350,8 @@
                 </div>
             </div>
 
-            <button type="button" onclick="openSaveModal()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
-                💾 Guardar
+            <button type="button" onclick="openSaveModal()" class="bg-indigo-500/30 hover:bg-indigo-500 text-white font-semibold py-2 px-3 rounded-md border border-indigo-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
+                💾 Guardar Local
             </button>
             <button type="button" onclick="openStationModal()" class="bg-cyan-500/30 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                 ➕ Ingresar
@@ -341,8 +361,11 @@
             <h1 class="text-2xl font-bold tracking-wide text-gray-100">Diseñador de Layout Industrial</h1>
             <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
         </div>
-        <div class="flex justify-center md:justify-end items-center space-x-3">
-            <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-sm flex items-center space-x-1">
+        <div class="flex justify-center md:justify-end items-center space-x-2">
+            <!-- BOTONES DE FIREBASE -->
+            <button class="btn-firebase-save" onclick="guardarMiLayoutActual()">☁️ Guardar en Firebase</button>
+            <button class="btn-firebase-load" onclick="cargarMiLayoutGuardado()">📥 Cargar de Firebase</button>
+            <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center space-x-1">
                 <span>📊 Exportar</span>
             </button>
         </div>
@@ -356,18 +379,15 @@
             <div class="flex flex-wrap justify-between items-center mb-2 gap-3">
                 <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
                 
-                <!-- Opciones de cuadrícula y FILTROS EN CASCADA -->
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs shadow-md">
                         Ocultar Cuadrícula
                     </button>
 
-                    <!-- DESPLEGABLE 1: TRABAJO -->
                     <select id="filterTrabajo" onchange="onTrabajoChange(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
                         <option value="">-- Seleccionar Trabajo --</option>
                     </select>
 
-                    <!-- DESPLEGABLE 2: MODELO -->
                     <select id="filterModelo" onchange="cargarDisenoEspecifico()" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
                         <option value="">-- Seleccionar Modelo --</option>
                     </select>
@@ -377,7 +397,7 @@
                     </button>
                 </div>
             </div>
-            <!-- Modificado: h-[550px] para que la vista preliminar sea más larga -->
+
             <div id="plantCanvas" class="relative w-full h-[550px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
                 <!-- Objetos dinámicos -->
             </div>
@@ -409,6 +429,7 @@
         </div>
     </div>
 
+    <!-- LÓGICA PRINCIPAL DE LA APLICACIÓN -->
     <script>
         const form = document.getElementById('areaForm');
         const canvas = document.getElementById('plantCanvas');
@@ -426,14 +447,12 @@
             texto: { bg: 'bg-[#030712]', hex: '030712', borderHex: '00F0FF', text: 'text-[#00f0ff] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#00f0ff]', extraClass: 'texto-brillante' }
         };
 
-        // --- MANEJO DEL MENÚ "NUEVO" ---
         function toggleNuevoMenu(event) {
             event.stopPropagation();
             const menu = document.getElementById('nuevoMenu');
             menu.classList.toggle('hidden');
         }
 
-        // Cierra el menú de opciones al hacer clic fuera de él
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('nuevoMenu');
             if (menu && !menu.classList.contains('hidden')) {
@@ -441,133 +460,13 @@
             }
         });
 
-        // Opción 1: Iniciar nuevo proyecto desde cero
-        function iniciarNuevoProyecto() {
-            document.getElementById('nuevoMenu').classList.add('hidden');
-            if (Object.keys(database).length > 0) {
-                if (!confirm("¿Deseas iniciar un nuevo proyecto desde el inicio? Se limpiará el área de trabajo actual.")) {
-                    return;
-                }
-            }
-
+        function renderizarBaseDeDatosCompleta() {
             canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
-            
-            database = {};
-            objectCount = 0;
-            document.getElementById('currentTrabajoName').value = "";
-            document.getElementById('currentModeloName').value = "";
-            resetFormState();
-        }
+            inventoryList.innerHTML = '';
 
-        // Opción 2: Copiar estructura u objetos para guardar como otro trabajo/modelo
-        function copiarDisenoActual() {
-            document.getElementById('nuevoMenu').classList.add('hidden');
             if (Object.keys(database).length === 0) {
-                alert("No hay ningún diseño u objetos en el canvas para copiar.");
+                inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
                 return;
-            }
-
-            // Mantiene el canvas y database, pero limpia los identificadores
-            document.getElementById('currentTrabajoName').value = "";
-            document.getElementById('currentModeloName').value = "";
-            
-            // Desselecciona filtros actuales
-            document.getElementById('filterTrabajo').value = "";
-            onTrabajoChange("");
-
-            // Abre modal para que el usuario ingrese el nuevo trabajo/modelo
-            openSaveModal();
-            alert("Estructura y objetos copiados. Por favor ingresa el nuevo Nombre de Trabajo y Modelo para guardar la copia.");
-        }
-
-        // --- MANEJO DE VENTANAS MODALES ---
-        function openStationModal() {
-            document.getElementById('stationModal').classList.remove('hidden');
-        }
-
-        function closeStationModal() {
-            document.getElementById('stationModal').classList.add('hidden');
-        }
-
-        function openSaveModal() {
-            document.getElementById('saveModal').classList.remove('hidden');
-        }
-
-        function closeSaveModal() {
-            document.getElementById('saveModal').classList.add('hidden');
-        }
-
-        // --- SISTEMA DE FILTROS EN CASCADA (TRABAJO Y MODELO) ---
-        function actualizarDesplegablesFiltro() {
-            const filterTrabajo = document.getElementById('filterTrabajo');
-            const valorTrabajoActual = filterTrabajo.value;
-
-            filterTrabajo.innerHTML = '<option value="">-- Seleccionar Trabajo --</option>';
-            
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            
-            // Extraer nombres de trabajos únicos
-            const trabajosUnicos = new Set();
-            Object.keys(savedLibrary).forEach(key => {
-                const item = savedLibrary[key];
-                if (item.trabajo) trabajosUnicos.add(item.trabajo);
-            });
-
-            Array.from(trabajosUnicos).sort().forEach(trabajo => {
-                const opt = document.createElement('option');
-                opt.value = trabajo;
-                opt.textContent = trabajo;
-                if (trabajo === valorTrabajoActual) opt.selected = true;
-                filterTrabajo.appendChild(opt);
-            });
-
-            onTrabajoChange(filterTrabajo.value);
-        }
-
-        function onTrabajoChange(trabajoSeleccionado) {
-            const filterModelo = document.getElementById('filterModelo');
-            filterModelo.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
-
-            if (!trabajoSeleccionado) return;
-
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-
-            Object.keys(savedLibrary).forEach(key => {
-                const item = savedLibrary[key];
-                if (item.trabajo === trabajoSeleccionado) {
-                    const opt = document.createElement('option');
-                    opt.value = key; // Clave única: "TRABAJO___MODELO"
-                    opt.textContent = item.modelo;
-                    filterModelo.appendChild(opt);
-                }
-            });
-        }
-
-        function cargarDisenoEspecifico() {
-            const key = document.getElementById('filterModelo').value;
-            if (!key) return;
-
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            const item = savedLibrary[key];
-
-            if (!item) {
-                alert("El diseño seleccionado no existe.");
-                return;
-            }
-
-            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
-            
-            database = item.database;
-            objectCount = item.objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
-            
-            document.getElementById('currentTrabajoName').value = item.trabajo;
-            document.getElementById('currentModeloName').value = item.modelo;
-
-            const currentEmptyRow = document.getElementById('emptyRow');
-            if (Object.keys(database).length > 0 && currentEmptyRow) {
-                currentEmptyRow.style.display = 'none';
             }
 
             Object.keys(database).forEach(id => {
@@ -600,7 +499,108 @@
             });
         }
 
-        // FUNCIÓN PARA GUARDAR CON ESTRUCTURA TRABAJO -> MODELO
+        function iniciarNuevoProyecto() {
+            document.getElementById('nuevoMenu').classList.add('hidden');
+            if (Object.keys(database).length > 0) {
+                if (!confirm("¿Deseas iniciar un nuevo proyecto desde el inicio? Se limpiará el área de trabajo actual.")) {
+                    return;
+                }
+            }
+
+            database = {};
+            objectCount = 0;
+            document.getElementById('currentTrabajoName').value = "";
+            document.getElementById('currentModeloName').value = "";
+            resetFormState();
+            renderizarBaseDeDatosCompleta();
+        }
+
+        function copiarDisenoActual() {
+            document.getElementById('nuevoMenu').classList.add('hidden');
+            if (Object.keys(database).length === 0) {
+                alert("No hay ningún diseño u objetos en el canvas para copiar.");
+                return;
+            }
+
+            document.getElementById('currentTrabajoName').value = "";
+            document.getElementById('currentModeloName').value = "";
+            document.getElementById('filterTrabajo').value = "";
+            onTrabajoChange("");
+
+            openSaveModal();
+            alert("Estructura y objetos copiados. Por favor ingresa el nuevo Nombre de Trabajo y Modelo para guardar la copia.");
+        }
+
+        function openStationModal() { document.getElementById('stationModal').classList.remove('hidden'); }
+        function closeStationModal() { document.getElementById('stationModal').classList.add('hidden'); }
+        function openSaveModal() { document.getElementById('saveModal').classList.remove('hidden'); }
+        function closeSaveModal() { document.getElementById('saveModal').classList.add('hidden'); }
+
+        function actualizarDesplegablesFiltro() {
+            const filterTrabajo = document.getElementById('filterTrabajo');
+            const valorTrabajoActual = filterTrabajo.value;
+
+            filterTrabajo.innerHTML = '<option value="">-- Seleccionar Trabajo --</option>';
+            
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            const trabajosUnicos = new Set();
+            
+            Object.keys(savedLibrary).forEach(key => {
+                const item = savedLibrary[key];
+                if (item.trabajo) trabajosUnicos.add(item.trabajo);
+            });
+
+            Array.from(trabajosUnicos).sort().forEach(trabajo => {
+                const opt = document.createElement('option');
+                opt.value = trabajo;
+                opt.textContent = trabajo;
+                if (trabajo === valorTrabajoActual) opt.selected = true;
+                filterTrabajo.appendChild(opt);
+            });
+
+            onTrabajoChange(filterTrabajo.value);
+        }
+
+        function onTrabajoChange(trabajoSeleccionado) {
+            const filterModelo = document.getElementById('filterModelo');
+            filterModelo.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
+
+            if (!trabajoSeleccionado) return;
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+
+            Object.keys(savedLibrary).forEach(key => {
+                const item = savedLibrary[key];
+                if (item.trabajo === trabajoSeleccionado) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = item.modelo;
+                    filterModelo.appendChild(opt);
+                }
+            });
+        }
+
+        function cargarDisenoEspecifico() {
+            const key = document.getElementById('filterModelo').value;
+            if (!key) return;
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            const item = savedLibrary[key];
+
+            if (!item) {
+                alert("El diseño seleccionado no existe.");
+                return;
+            }
+
+            database = item.database || {};
+            objectCount = item.objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
+            
+            document.getElementById('currentTrabajoName').value = item.trabajo;
+            document.getElementById('currentModeloName').value = item.modelo;
+
+            renderizarBaseDeDatosCompleta();
+        }
+
         function guardarDisenoActual() {
             const trabajo = document.getElementById('currentTrabajoName').value.trim();
             const modelo = document.getElementById('currentModeloName').value.trim();
@@ -627,13 +627,12 @@
             localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
             actualizarDesplegablesFiltro();
             
-            // Auto seleccionar en los filtros lo recién guardado
             document.getElementById('filterTrabajo').value = trabajo;
             onTrabajoChange(trabajo);
             document.getElementById('filterModelo').value = storageKey;
 
             closeSaveModal();
-            alert(`¡Trabajo "${trabajo}" con Modelo "${modelo}" guardado correctamente!`);
+            alert(`¡Trabajo "${trabajo}" con Modelo "${modelo}" guardado localmente!`);
         }
 
         function eliminarProyectoSeleccionado() {
@@ -667,7 +666,6 @@
             btn.innerText = canvas.classList.contains('grid-hidden') ? "Mostrar Cuadrícula" : "Ocultar Cuadrícula";
         }
 
-        // --- SUBMIT DEL FORMULARIO DE CONTROL DE ESTACIÓN ---
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const editingId = document.getElementById('editingId').value;
@@ -1035,6 +1033,75 @@
             const fileName = (trabajo && modelo) ? `${trabajo}_${modelo}.xlsx` : "Layout_Control_Produccion.xlsx";
             saveAs(new Blob([buffer]), fileName);
         }
+    </script>
+
+    <!-- INTEGRACIÓN CON FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL1kcdZGBAaETrq2H6Qbwq-QEwzPIJ5WY",
+            authDomain: "layout-71405.firebaseapp.com",
+            projectId: "layout-71405",
+            storageBucket: "layout-71405.firebasestorage.app",
+            messagingSenderId: "1522652969",
+            appId: "1:1522652969:web:d22d37beeb8a3149acc938",
+            measurementId: "G-KXCZGWX98N"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Guardar Layout actual en Firebase
+        window.guardarMiLayoutActual = async function() {
+            if (Object.keys(database).length === 0) {
+                alert("⚠️ Agrega al menos una estación o recuadro al layout antes de guardar en Firebase.");
+                return;
+            }
+
+            const trabajo = document.getElementById('currentTrabajoName').value.trim() || 'General';
+            const modelo = document.getElementById('currentModeloName').value.trim() || 'Principal';
+
+            try {
+                await setDoc(doc(db, "layouts", "layout_planta_1"), { 
+                    trabajo: trabajo,
+                    modelo: modelo,
+                    objectCount: objectCount,
+                    database: database,
+                    fechaGuardado: new Date().toISOString()
+                });
+                alert("✅ Layout guardado correctamente en Firebase Cloud Storage");
+            } catch (error) {
+                console.error("Error guardando en Firebase:", error);
+                alert("❌ Error al guardar en Firebase: " + error.message);
+            }
+        };
+
+        // Cargar Layout desde Firebase
+        window.cargarMiLayoutGuardado = async function() {
+            try {
+                const docRef = doc(db, "layouts", "layout_planta_1");
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const dataCloud = docSnap.data();
+                    
+                    database = dataCloud.database || {};
+                    objectCount = dataCloud.objectCount || 0;
+                    document.getElementById('currentTrabajoName').value = dataCloud.trabajo || '';
+                    document.getElementById('currentModeloName').value = dataCloud.modelo || '';
+
+                    renderizarBaseDeDatosCompleta();
+                    alert("✅ Layout cargado exitosamente desde Firebase.");
+                } else {
+                    alert("⚠️ Aún no hay ningún layout guardado en la base de datos de Firebase.");
+                }
+            } catch (error) {
+                console.error("Error cargando desde Firebase:", error);
+                alert("❌ Error al cargar de Firebase: " + error.message);
+            }
+        };
     </script>
 </body>
 </html>
