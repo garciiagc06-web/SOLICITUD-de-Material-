@@ -28,8 +28,13 @@
             z-index: 0;
         }
 
-        /* Asegurar que el contenido esté por encima del pseudo-elemento de brillo */
-        header, .max-w-7xl {
+        /* Asegurar que el header esté por encima de la vista preliminar para que el menú flotante no se tape */
+        header {
+            position: relative;
+            z-index: 50;
+        }
+
+        .max-w-7xl {
             position: relative;
             z-index: 1;
         }
@@ -71,6 +76,12 @@
             color: #111827 !important;
         }
 
+        /* Estilo Glossy / Brillante para el tipo Texto */
+        .texto-brillante {
+            background: radial-gradient(circle at 50% 30%, #111827 0%, #030712 100%) !important;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
         /* Tiradores de redimensión con los signos < > */
         .resizer-h, .resizer-v, .resizer-both {
             position: absolute;
@@ -99,18 +110,6 @@
             border-top-left-radius: 4px;
         }
 
-        /* Estilos de atenuación y resalte para búsqueda */
-        .filter-highlight {
-            box-shadow: 0 0 15px 4px #00f0ff, 0 0 25px 8px rgba(0, 240, 255, 0.6) !important;
-            border-color: #00f0ff !important;
-            z-index: 30 !important;
-            opacity: 1 !important;
-        }
-
-        .filter-dimmed {
-            opacity: 0.25 !important;
-        }
-
         .seccion-cristalina {
             background: rgba(220, 224, 230, 0.29) !important;
             backdrop-filter: blur(14px);
@@ -126,11 +125,6 @@
             background: rgba(230, 235, 242, 0.58) !important;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.6);
             border-color: rgba(255, 255, 255, 0.5) !important;
-        }
-
-        .seccion-cristalina:focus-within {
-            transform: translateY(-2px);
-            border-color: #2563eb !important;
         }
 
         .seccion-cristalina h2, 
@@ -158,21 +152,25 @@
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
 
-    <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO -->
+    <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO CON TRABAJO Y MODELO -->
     <div id="saveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-indigo-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-indigo-400 flex items-center gap-2">💾 Guardar Diseño</h3>
+                <h3 class="text-lg font-bold text-indigo-400 flex items-center gap-2">💾 Guardar Trabajo y Diseño</h3>
                 <button onclick="closeSaveModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Nombre del Proyecto</label>
-                    <input type="text" id="currentDesignName" placeholder="Ej. Planta_Norte_Linea1" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm focus:border-indigo-500">
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Nombre del Trabajo (Layout)</label>
+                    <input type="text" id="currentTrabajoName" placeholder="Ej. KING KOMBO" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Modelo / Diseño Específico</label>
+                    <input type="text" id="currentModeloName" placeholder="Ej. 13906-002" class="input-animado w-full rounded-md bg-[#121215] border border-gray-600 text-gray-100 p-2 text-sm focus:border-indigo-500">
                 </div>
                 <div class="flex items-center justify-end space-x-3 pt-3 border-t border-gray-700/60">
                     <button onclick="closeSaveModal()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
-                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar Proyecto</button>
+                    <button onclick="guardarDisenoActual()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md border border-indigo-400/30 text-sm">Guardar</button>
                 </div>
             </div>
         </div>
@@ -193,6 +191,7 @@
                         <option value="trabajo">Maquinado</option>
                         <option value="operacional">Estación de Trabajo</option>
                         <option value="pasillo">Pasillo / Tránsito</option>
+                        <option value="texto">Texto</option>
                     </select>
                 </div>
                 <div>
@@ -233,21 +232,109 @@
                 </div>
 
                 <div class="flex items-center justify-end space-x-3 md:col-span-2 pt-2 border-t border-gray-700/60">
-                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 backdrop-blur-sm shadow-md text-sm">Cancelar</button>
-                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 backdrop-blur-sm shadow-md text-sm">Actualizar Estación</button>
+                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
+                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 text-sm">Actualizar Estación</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Encabezado -->
-    <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4">
-        <div class="flex items-center justify-center md:justify-start space-x-2">
-            <button type="button" onclick="nuevoDiseno()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
-                📄 Nuevo
-            </button>
+    <!-- VENTANA FLOTANTE: 1. CONTROL DE ESTACIÓN -->
+    <div id="stationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-4xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h2 id="formTitle" class="text-lg font-bold text-cyan-400 flex items-center gap-2">1. Control de Estación</h2>
+                <button onclick="closeStationModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            
+            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end text-sm">
+                <input type="hidden" id="editingId" value="">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">1. Tipo de Zona Visual</label>
+                    <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                        <option value="trabajo">Maquinado</option>
+                        <option value="operacional">Estación de Trabajo</option>
+                        <option value="pasillo">Pasillo / Tránsito</option>
+                        <option value="texto">Texto</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">2. Área / Línea</label>
+                    <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">3. Modelo</label>
+                    <input type="text" id="procModelo" placeholder="Ej. Mod-X1" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">4. Sub-Ensamble</label>
+                    <input type="text" id="procSubEnsamble" placeholder="Ej. Base Inferior" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">5. Medida</label>
+                    <input type="text" id="procMedida" placeholder="Ej. 1/2 pulg" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">6. Troquel / Estación</label>
+                    <input type="text" id="procTroquel" placeholder="Ej. TR-01" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">7. Estándar x Hora</label>
+                    <input type="text" id="procEstandar" placeholder="Ej. 450" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">8. Op. Requerido</label>
+                    <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300">9. Largo Líneas</label>
+                    <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
+                </div>
+
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label class="block text-xs font-semibold text-gray-300">10. Ancho Columnas</label>
+                    <div class="flex space-x-2 mt-1">
+                        <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
+                        <button type="submit" id="submitBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-5 rounded-md border border-cyan-400/30 text-xs shadow-md">Agregar</button>
+                        <button type="button" id="cancelBtn" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-md border border-gray-500/30 text-xs" onclick="resetFormState(); closeStationModal();">Cancelar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Encabezado con z-index elevado -->
+    <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4 relative z-50">
+        <div class="flex items-center justify-center md:justify-start space-x-2 relative">
+            <!-- BOTÓN NUEVO CON MENÚ DESPLEGABLE Y SUPERPOSICIÓN ALTA -->
+            <div class="relative inline-block text-left">
+                <button type="button" onclick="toggleNuevoMenu(event)" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
+                    📄 Nuevo ▾
+                </button>
+                <div id="nuevoMenu" class="hidden absolute left-0 mt-2 w-52 bg-[#18181c] border border-gray-700 rounded-md shadow-2xl z-[9999] overflow-hidden">
+                    <button type="button" onclick="iniciarNuevoProyecto()" class="w-full text-left px-4 py-2.5 text-xs text-gray-200 hover:bg-emerald-600 hover:text-white transition-colors border-b border-gray-700/50 flex items-center gap-2">
+                        <span>✨</span> Iniciar nuevo proyecto
+                    </button>
+                    <button type="button" onclick="copiarDisenoActual()" class="w-full text-left px-4 py-2.5 text-xs text-gray-200 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                        <span>📋</span> Copiar diseño actual
+                    </button>
+                </div>
+            </div>
+
             <button type="button" onclick="openSaveModal()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                 💾 Guardar
+            </button>
+            <button type="button" onclick="openStationModal()" class="bg-cyan-500/30 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
+                ➕ Ingresar
             </button>
         </div>
         <div class="text-center">
@@ -264,85 +351,25 @@
     <!-- Contenedor Principal -->
     <div class="max-w-7xl mx-auto p-4 space-y-6">
 
-        <!-- 1. FORMULARIO DE REGISTRO (CONTROL DE ESTACIÓN) -->
-        <div class="seccion-cristalina p-4 rounded-lg shadow-lg">
-            <h2 id="formTitle" class="text-lg font-semibold border-b border-gray-400/50 pb-2 mb-3">1. Control de Estación</h2>
-            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                <input type="hidden" id="editingId" value="">
-                
-                <div>
-                    <label class="block text-xs font-semibold">1. Tipo de Zona Visual</label>
-                    <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                        <option value="trabajo">Maquinado</option>
-                        <option value="operacional">Estación de Trabajo</option>
-                        <option value="pasillo">Pasillo / Tránsito</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">2. Área / Línea</label>
-                    <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">3. Modelo</label>
-                    <input type="text" id="procModelo" placeholder="Ej. Mod-X1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">4. Sub-Ensamble</label>
-                    <input type="text" id="procSubEnsamble" placeholder="Ej. Base Inferior" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">5. Medida</label>
-                    <input type="text" id="procMedida" placeholder="Ej. 1/2 pulg" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">6. Troquel / Estación</label>
-                    <input type="text" id="procTroquel" placeholder="Ej. TR-01" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">7. Estándar x Hora</label>
-                    <input type="text" id="procEstandar" placeholder="Ej. 450" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">8. Op. Requerido</label>
-                    <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">9. Largo Líneas</label>
-                    <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold">10. Ancho Columnas</label>
-                    <div class="flex space-x-1 mt-1">
-                        <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado block w-full rounded-md bg-white/60 border border-gray-400 text-gray-900 p-1.5 text-sm backdrop-blur-sm" required>
-                        <button type="submit" id="submitBtn" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs shadow-md">Agregar</button>
-                        <button type="button" id="cancelBtn" class="hidden bg-gray-500/80 hover:bg-gray-400 text-white font-semibold py-1.5 px-3 rounded-md border border-gray-400/30 text-xs" onclick="resetFormState()">X</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
         <!-- 2. VISTA PRELIMINAR -->
         <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full relative">
             <div class="flex flex-wrap justify-between items-center mb-2 gap-3">
                 <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
                 
-                <!-- Opciones de cuadrícula y gestión de proyectos guardados -->
+                <!-- Opciones de cuadrícula y FILTROS EN CASCADA -->
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" onclick="toggleCuadricula()" id="btnToggleGrid" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs shadow-md">
                         Ocultar Cuadrícula
                     </button>
 
-                    <select id="filterModelo" onchange="cargarDisenoDesdeModelo(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
-                        <option value="">-- Seleccionar Proyecto --</option>
+                    <!-- DESPLEGABLE 1: TRABAJO -->
+                    <select id="filterTrabajo" onchange="onTrabajoChange(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
+                        <option value="">-- Seleccionar Trabajo --</option>
+                    </select>
+
+                    <!-- DESPLEGABLE 2: MODELO -->
+                    <select id="filterModelo" onchange="cargarDisenoEspecifico()" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
+                        <option value="">-- Seleccionar Modelo --</option>
                     </select>
 
                     <button type="button" onclick="eliminarProyectoSeleccionado()" class="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-1.5 px-3 rounded-md border border-slate-700 text-xs flex items-center gap-1 shadow-md">
@@ -350,7 +377,8 @@
                     </button>
                 </div>
             </div>
-            <div id="plantCanvas" class="relative w-full h-[450px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
+            <!-- Modificado: h-[550px] para que la vista preliminar sea más larga -->
+            <div id="plantCanvas" class="relative w-full h-[550px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
                 <!-- Objetos dinámicos -->
             </div>
         </div>
@@ -394,61 +422,136 @@
         const colorMap = {
             trabajo: { bg: 'bg-[#000000]', hex: '000000', borderHex: '22C55E', text: 'text-[#22c55e] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#22c55e]', extraClass: '' },
             operacional: { bg: 'bg-[#000000]', hex: '000000', borderHex: '6B7280', text: 'text-gray-200 font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: '' },
-            pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' }
+            pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' },
+            texto: { bg: 'bg-[#030712]', hex: '030712', borderHex: '00F0FF', text: 'text-[#00f0ff] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#00f0ff]', extraClass: 'texto-brillante' }
         };
 
-        // --- FUNCIONES PARA POBLAR EL DESPLEGABLE DE PROYECTOS ---
-        function actualizarDesplegablesFiltro() {
-            const filterModelo = document.getElementById('filterModelo');
-            const valorActual = filterModelo.value;
-
-            filterModelo.innerHTML = '<option value="">-- Seleccionar Proyecto --</option>';
-            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            Object.keys(savedLibrary).sort().forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                if (name === valorActual) opt.selected = true;
-                filterModelo.appendChild(opt);
-            });
+        // --- MANEJO DEL MENÚ "NUEVO" ---
+        function toggleNuevoMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('nuevoMenu');
+            menu.classList.toggle('hidden');
         }
 
-        // FUNCIÓN PARA ELIMINAR EL PROYECTO SELECCIONADO EN EL DESPLEGABLE
-        function eliminarProyectoSeleccionado() {
-            const filterModelo = document.getElementById('filterModelo');
-            const selectedProject = filterModelo.value;
+        // Cierra el menú de opciones al hacer clic fuera de él
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('nuevoMenu');
+            if (menu && !menu.classList.contains('hidden')) {
+                menu.classList.add('hidden');
+            }
+        });
 
-            if (!selectedProject) {
-                alert("Por favor selecciona un proyecto de la lista para borrar.");
+        // Opción 1: Iniciar nuevo proyecto desde cero
+        function iniciarNuevoProyecto() {
+            document.getElementById('nuevoMenu').classList.add('hidden');
+            if (Object.keys(database).length > 0) {
+                if (!confirm("¿Deseas iniciar un nuevo proyecto desde el inicio? Se limpiará el área de trabajo actual.")) {
+                    return;
+                }
+            }
+
+            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
+            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            
+            database = {};
+            objectCount = 0;
+            document.getElementById('currentTrabajoName').value = "";
+            document.getElementById('currentModeloName').value = "";
+            resetFormState();
+        }
+
+        // Opción 2: Copiar estructura u objetos para guardar como otro trabajo/modelo
+        function copiarDisenoActual() {
+            document.getElementById('nuevoMenu').classList.add('hidden');
+            if (Object.keys(database).length === 0) {
+                alert("No hay ningún diseño u objetos en el canvas para copiar.");
                 return;
             }
 
-            if (confirm(`¿Estás seguro de que deseas eliminar el proyecto "${selectedProject}" de forma permanente?`)) {
-                const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-                delete savedLibrary[selectedProject];
-                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
+            // Mantiene el canvas y database, pero limpia los identificadores
+            document.getElementById('currentTrabajoName').value = "";
+            document.getElementById('currentModeloName').value = "";
+            
+            // Desselecciona filtros actuales
+            document.getElementById('filterTrabajo').value = "";
+            onTrabajoChange("");
 
-                // Si el proyecto eliminado es el que está actualmente en el lienzo, limpiamos el espacio de trabajo
-                if (document.getElementById('currentDesignName').value === selectedProject) {
-                    canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-                    inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
-                    database = {};
-                    objectCount = 0;
-                    document.getElementById('currentDesignName').value = "";
-                    resetFormState();
-                }
-
-                actualizarDesplegablesFiltro();
-                alert(`El proyecto "${selectedProject}" ha sido eliminado correctamente.`);
-            }
+            // Abre modal para que el usuario ingrese el nuevo trabajo/modelo
+            openSaveModal();
+            alert("Estructura y objetos copiados. Por favor ingresa el nuevo Nombre de Trabajo y Modelo para guardar la copia.");
         }
 
-        // FUNCIÓN QUE EJECUTA LA ACCIÓN DE ABRIR DESDE LA LISTA DESPLEGABLE DE PROYECTOS
-        function cargarDisenoDesdeModelo(designName) {
-            if (!designName) return;
+        // --- MANEJO DE VENTANAS MODALES ---
+        function openStationModal() {
+            document.getElementById('stationModal').classList.remove('hidden');
+        }
+
+        function closeStationModal() {
+            document.getElementById('stationModal').classList.add('hidden');
+        }
+
+        function openSaveModal() {
+            document.getElementById('saveModal').classList.remove('hidden');
+        }
+
+        function closeSaveModal() {
+            document.getElementById('saveModal').classList.add('hidden');
+        }
+
+        // --- SISTEMA DE FILTROS EN CASCADA (TRABAJO Y MODELO) ---
+        function actualizarDesplegablesFiltro() {
+            const filterTrabajo = document.getElementById('filterTrabajo');
+            const valorTrabajoActual = filterTrabajo.value;
+
+            filterTrabajo.innerHTML = '<option value="">-- Seleccionar Trabajo --</option>';
+            
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            
+            // Extraer nombres de trabajos únicos
+            const trabajosUnicos = new Set();
+            Object.keys(savedLibrary).forEach(key => {
+                const item = savedLibrary[key];
+                if (item.trabajo) trabajosUnicos.add(item.trabajo);
+            });
+
+            Array.from(trabajosUnicos).sort().forEach(trabajo => {
+                const opt = document.createElement('option');
+                opt.value = trabajo;
+                opt.textContent = trabajo;
+                if (trabajo === valorTrabajoActual) opt.selected = true;
+                filterTrabajo.appendChild(opt);
+            });
+
+            onTrabajoChange(filterTrabajo.value);
+        }
+
+        function onTrabajoChange(trabajoSeleccionado) {
+            const filterModelo = document.getElementById('filterModelo');
+            filterModelo.innerHTML = '<option value="">-- Seleccionar Modelo --</option>';
+
+            if (!trabajoSeleccionado) return;
 
             const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            if (!savedLibrary[designName]) {
+
+            Object.keys(savedLibrary).forEach(key => {
+                const item = savedLibrary[key];
+                if (item.trabajo === trabajoSeleccionado) {
+                    const opt = document.createElement('option');
+                    opt.value = key; // Clave única: "TRABAJO___MODELO"
+                    opt.textContent = item.modelo;
+                    filterModelo.appendChild(opt);
+                }
+            });
+        }
+
+        function cargarDisenoEspecifico() {
+            const key = document.getElementById('filterModelo').value;
+            if (!key) return;
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            const item = savedLibrary[key];
+
+            if (!item) {
                 alert("El diseño seleccionado no existe.");
                 return;
             }
@@ -456,9 +559,11 @@
             canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
             inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
             
-            database = savedLibrary[designName].database;
-            objectCount = savedLibrary[designName].objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
-            document.getElementById('currentDesignName').value = designName;
+            database = item.database;
+            objectCount = item.objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
+            
+            document.getElementById('currentTrabajoName').value = item.trabajo;
+            document.getElementById('currentModeloName').value = item.modelo;
 
             const currentEmptyRow = document.getElementById('emptyRow');
             if (Object.keys(database).length > 0 && currentEmptyRow) {
@@ -493,41 +598,15 @@
                 row.innerHTML = generateRowHTML(id, obj.type, obj.area, obj.modelo, obj.subEnsamble, obj.medida, obj.troquel, obj.estandar, obj.opsReq, obj.length, obj.width);
                 inventoryList.appendChild(row);
             });
-
-            actualizarDesplegablesFiltro();
-            alert(`¡Diseño "${designName}" cargado con éxito!`);
         }
 
-        // --- MANEJO DE VENTANA MODAL DE GUARDADO ---
-        function openSaveModal() {
-            document.getElementById('saveModal').classList.remove('hidden');
-        }
-
-        function closeSaveModal() {
-            document.getElementById('saveModal').classList.add('hidden');
-        }
-
-        function nuevoDiseno() {
-            if (Object.keys(database).length > 0) {
-                if (!confirm("¿Deseas limpiar el espacio de trabajo actual para crear un nuevo diseño?")) {
-                    return;
-                }
-            }
-
-            canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
-            inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
-            
-            database = {};
-            objectCount = 0;
-            document.getElementById('currentDesignName').value = "";
-            resetFormState();
-            actualizarDesplegablesFiltro();
-        }
-
+        // FUNCIÓN PARA GUARDAR CON ESTRUCTURA TRABAJO -> MODELO
         function guardarDisenoActual() {
-            const designName = document.getElementById('currentDesignName').value.trim();
-            if (!designName) {
-                alert("Por favor asigna un nombre al diseño antes de guardarlo.");
+            const trabajo = document.getElementById('currentTrabajoName').value.trim();
+            const modelo = document.getElementById('currentModeloName').value.trim();
+
+            if (!trabajo || !modelo) {
+                alert("Por favor indica tanto el Nombre del Trabajo como el Modelo.");
                 return;
             }
             if (Object.keys(database).length === 0) {
@@ -535,15 +614,47 @@
                 return;
             }
 
+            const storageKey = `${trabajo}___${modelo}`;
             const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
-            savedLibrary[designName] = {
+            
+            savedLibrary[storageKey] = {
+                trabajo: trabajo,
+                modelo: modelo,
                 database: database,
                 objectCount: objectCount
             };
+
             localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
             actualizarDesplegablesFiltro();
+            
+            // Auto seleccionar en los filtros lo recién guardado
+            document.getElementById('filterTrabajo').value = trabajo;
+            onTrabajoChange(trabajo);
+            document.getElementById('filterModelo').value = storageKey;
+
             closeSaveModal();
-            alert(`¡Diseño "${designName}" guardado correctamente!`);
+            alert(`¡Trabajo "${trabajo}" con Modelo "${modelo}" guardado correctamente!`);
+        }
+
+        function eliminarProyectoSeleccionado() {
+            const storageKey = document.getElementById('filterModelo').value;
+
+            if (!storageKey) {
+                alert("Por favor selecciona un Trabajo y Modelo de la lista para borrar.");
+                return;
+            }
+
+            const savedLibrary = JSON.parse(localStorage.getItem('industrial_layouts_library') || '{}');
+            const item = savedLibrary[storageKey];
+
+            if (confirm(`¿Deseas eliminar el diseño con Modelo "${item.modelo}" del Trabajo "${item.trabajo}"?`)) {
+                delete savedLibrary[storageKey];
+                localStorage.setItem('industrial_layouts_library', JSON.stringify(savedLibrary));
+
+                iniciarNuevoProyecto();
+                actualizarDesplegablesFiltro();
+                alert("El modelo seleccionado ha sido eliminado correctamente.");
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -556,7 +667,7 @@
             btn.innerText = canvas.classList.contains('grid-hidden') ? "Mostrar Cuadrícula" : "Ocultar Cuadrícula";
         }
 
-        // --- SUBMIT DE LA SECCIÓN 1 (GUARDA/AGREGA DATOS Y ACTUALIZA DESPLEGABLES) ---
+        // --- SUBMIT DEL FORMULARIO DE CONTROL DE ESTACIÓN ---
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const editingId = document.getElementById('editingId').value;
@@ -610,7 +721,7 @@
                 form.reset();
             }
 
-            actualizarDesplegablesFiltro();
+            closeStationModal();
         });
 
         function updateVisualObject(id) {
@@ -781,7 +892,6 @@
                 database[id].length, database[id].width
             );
             closeInlineEditor();
-            actualizarDesplegablesFiltro();
         };
 
         window.startEdit = function(id) {
@@ -800,7 +910,7 @@
 
             document.getElementById('submitBtn').innerText = "Guardar";
             document.getElementById('cancelBtn').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            openStationModal();
         };
 
         window.resetFormState = function() {
@@ -817,7 +927,6 @@
             if(row) row.remove();
             delete database[id];
             if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
-            actualizarDesplegablesFiltro();
         };
 
         async function exportarLayoutAExcel() {
@@ -921,8 +1030,10 @@
             sheet2.getColumn(1).width = 4;
 
             const buffer = await workbook.xlsx.writeBuffer();
-            const designNameTitle = document.getElementById('currentDesignName').value.trim() || "Layout_Control_Produccion";
-            saveAs(new Blob([buffer]), `${designNameTitle}.xlsx`);
+            const trabajo = document.getElementById('currentTrabajoName').value.trim();
+            const modelo = document.getElementById('currentModeloName').value.trim();
+            const fileName = (trabajo && modelo) ? `${trabajo}_${modelo}.xlsx` : "Layout_Control_Produccion.xlsx";
+            saveAs(new Blob([buffer]), fileName);
         }
     </script>
 </body>
