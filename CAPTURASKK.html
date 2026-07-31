@@ -5,6 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Capturas de Producción</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- INICIALIZACIÓN DE FIREBASE Y FIRESTORE (CDN MODULE) -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-analytics.js";
+      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.17.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDMLwb0i4NgwFgZHxaSuCm6zpVzCBH7GKw",
+        authDomain: "capturas-5b1bd.firebaseapp.com",
+        projectId: "capturas-5b1bd",
+        storageBucket: "capturas-5b1bd.firebasestorage.app",
+        messagingSenderId: "787842990607",
+        appId: "1:787842990607:web:6723e1e0df77d4301d597a",
+        measurementId: "G-KXFNV46Z9T"
+      };
+
+      // Inicializar Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const db = getFirestore(app);
+
+      // Función global para guardar capturas en Firestore
+      window.guardarEnFirestore = async function(data) {
+        try {
+          const docRef = await addDoc(collection(db, "capturas"), {
+            ...data,
+            fechaRegistro: serverTimestamp()
+          });
+          console.log("Registro guardado en Firestore con ID: ", docRef.id);
+        } catch (e) {
+          console.error("Error al guardar en Firestore: ", e);
+        }
+      };
+    </script>
+
     <style>
         .input-animado {
             transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
@@ -153,11 +189,28 @@
             const reetrabajo = parseInt(document.getElementById('inlineReetrabajo').value) || 0;
             const comentarios = document.getElementById('inlineComentarios').value.trim();
 
-            // Enviar datos actualizados al documento padre (LAYOUT.html)
+            const payloadData = {
+                id,
+                modelo: document.getElementById('viewModelo').textContent,
+                subEnsamble: document.getElementById('viewSubEnsamble').textContent,
+                troquel: document.getElementById('viewTroquel').textContent,
+                medida: document.getElementById('viewMedida').textContent,
+                cantidad,
+                scrap,
+                reetrabajo,
+                comentarios
+            };
+
+            // 1. Enviar datos localmente al iframe/documento padre (LAYOUT.html)
             window.parent.postMessage({
                 type: 'SAVE_INLINE_DATA',
                 payload: { id, cantidad, scrap, reetrabajo, comentarios }
             }, '*');
+
+            // 2. Guardar automáticamente en Firebase Firestore
+            if (typeof window.guardarEnFirestore === 'function') {
+                window.guardarEnFirestore(payloadData);
+            }
 
             closeInlineEditor();
         }
