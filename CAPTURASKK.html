@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capturas de Producción</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .input-animado {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .input-animado:hover {
+            transform: scale(1.01);
+            border-color: #9ca3af;
+        }
+        .input-animado:focus {
+            outline: none;
+            transform: translateX(5px);
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-transparent text-gray-200 font-sans">
+
+    <!-- VENTANA FLOTANTE DE CAPTURA DE PRODUCCIÓN (AL DAR DOBLE CLICK) -->
+    <div id="inlineEditPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-xl relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">Captura de Producción</h3>
+                <button onclick="closeInlineEditor()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <input type="hidden" id="inlineId">
+                <div>
+                    <span class="block text-xs text-gray-400">Modelo:</span>
+                    <p id="viewModelo" class="font-semibold text-gray-200 bg-[#121215] p-2 rounded border border-gray-700 mt-1"></p>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-400">Sub-Ensamble / Perfil:</span>
+                    <p id="viewSubEnsamble" class="font-semibold text-gray-200 bg-[#121215] p-2 rounded border border-gray-700 mt-1"></p>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-400">Troquel / Estación:</span>
+                    <p id="viewTroquel" class="font-semibold text-gray-200 bg-[#121215] p-2 rounded border border-gray-700 mt-1"></p>
+                </div>
+                <div>
+                    <span class="block text-xs text-gray-400">Medida:</span>
+                    <p id="viewMedida" class="font-semibold text-gray-200 bg-[#121215] p-2 rounded border border-gray-700 mt-1"></p>
+                </div>
+
+                <div class="md:col-span-2 bg-[#121215] p-4 rounded-lg border border-cyan-500/50 mt-2 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-cyan-400 mb-1">QTY PRODUCIDA:</label>
+                            <input type="number" id="inlineCantidadProducida" min="0" placeholder="0" class="input-animado w-full rounded bg-[#18181c] border border-cyan-500 p-2 text-white font-bold text-sm focus:ring-2 focus:ring-cyan-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-red-400 mb-1">QTY SCRAP:</label>
+                            <input type="number" id="inlineCantidadScrap" min="0" placeholder="0" class="input-animado w-full rounded bg-[#18181c] border border-red-500 p-2 text-white font-bold text-sm focus:ring-2 focus:ring-red-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-amber-400 mb-1">REETRABAJO:</label>
+                            <input type="number" id="inlineReetrabajo" min="0" placeholder="0" class="input-animado w-full rounded bg-[#18181c] border border-amber-500 p-2 text-white font-bold text-sm focus:ring-2 focus:ring-amber-400">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-300 mb-1">COMENTARIOS:</label>
+                        <textarea id="inlineComentarios" rows="2" placeholder="Notas o detalles adicionales..." class="input-animado w-full rounded bg-[#18181c] border border-gray-600 p-2 text-white text-xs focus:ring-2 focus:ring-cyan-400"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 md:col-span-2 pt-3 border-t border-gray-700/60">
+                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
+                    <button onclick="saveInlineChanges()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-5 rounded-md border border-cyan-400/30 text-sm shadow-md">Capturar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE: REGISTRO DE CAPTURAS DE PRODUCCIÓN -->
+    <div id="productionLogModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-6xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h2 class="text-xl font-bold text-cyan-400 flex items-center gap-2">
+                    <span>📊</span> 4. Registro de Capturas de Producción
+                </h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs bg-cyan-900/40 text-cyan-300 px-3 py-1 rounded-full font-bold border border-cyan-500/30">
+                        Sincronización en vivo
+                    </span>
+                    <button onclick="closeProductionLogModal()" class="text-gray-400 hover:text-white text-2xl font-semibold px-2">&times;</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto rounded border border-gray-700 bg-[#121215] shadow-sm">
+                <table class="min-w-full divide-y divide-gray-700 text-left text-xs">
+                    <thead class="bg-cyan-950/60 text-gray-200 font-bold">
+                        <tr>
+                            <th class="px-3 py-3">Estación / Troquel</th>
+                            <th class="px-3 py-3">Área</th>
+                            <th class="px-3 py-3">Modelo</th>
+                            <th class="px-3 py-3 text-center">Libras</th>
+                            <th class="px-3 py-3 text-center">Estd. x Hr</th>
+                            <th class="px-3 py-3 text-center">QTY Producida</th>
+                            <th class="px-3 py-3 text-center">QTY Scrap</th>
+                            <th class="px-3 py-3 text-center">Reetrabajo</th>
+                            <th class="px-3 py-3">Comentarios</th>
+                            <th class="px-3 py-3 text-center">Cumplimiento %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productionLogList" class="divide-y divide-gray-800 text-gray-300">
+                        <tr id="emptyLogRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">No se han registrado capturas de producción aún. Doble clic en una estación para capturar.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openProductionLogModal() {
+            document.getElementById('productionLogModal').classList.remove('hidden');
+        }
+
+        function closeProductionLogModal() {
+            document.getElementById('productionLogModal').classList.add('hidden');
+        }
+
+        function openInlineEditor(id, data) {
+            document.getElementById('inlineId').value = id;
+            document.getElementById('viewModelo').textContent = data.modelo;
+            document.getElementById('viewSubEnsamble').textContent = data.subEnsamble;
+            document.getElementById('viewTroquel').textContent = data.troquel;
+            document.getElementById('viewMedida').textContent = data.medida;
+            
+            document.getElementById('inlineCantidadProducida').value = data.cantidadProducida || '';
+            document.getElementById('inlineCantidadScrap').value = data.cantidadScrap || '';
+            document.getElementById('inlineReetrabajo').value = data.reetrabajo || '';
+            document.getElementById('inlineComentarios').value = data.comentarios || '';
+            
+            document.getElementById('inlineEditPanel').classList.remove('hidden');
+        }
+
+        function closeInlineEditor() {
+            document.getElementById('inlineEditPanel').classList.add('hidden');
+        }
+
+        function saveInlineChanges() {
+            const id = document.getElementById('inlineId').value;
+            if(!id) return;
+
+            const cantidad = parseInt(document.getElementById('inlineCantidadProducida').value) || 0;
+            const scrap = parseInt(document.getElementById('inlineCantidadScrap').value) || 0;
+            const reetrabajo = parseInt(document.getElementById('inlineReetrabajo').value) || 0;
+            const comentarios = document.getElementById('inlineComentarios').value.trim();
+
+            // Enviar datos actualizados al documento padre (LAYOUT.html)
+            window.parent.postMessage({
+                type: 'SAVE_INLINE_DATA',
+                payload: { id, cantidad, scrap, reetrabajo, comentarios }
+            }, '*');
+
+            closeInlineEditor();
+        }
+
+        function actualizarTablaCapturas(database) {
+            const logContainer = document.getElementById('productionLogList');
+            logContainer.innerHTML = '';
+
+            const keys = Object.keys(database);
+            if (keys.length === 0) {
+                logContainer.innerHTML = '<tr id="emptyLogRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">No se han registrado capturas de producción aún. Doble clic en una estación para capturar.</td></tr>';
+                return;
+            }
+
+            keys.forEach(id => {
+                const item = database[id];
+                const estandarNum = parseFloat(item.estandar) || 0;
+                const prodNum = item.cantidadProducida || 0;
+                const scrapNum = item.cantidadScrap || 0;
+                const reetrabajoNum = item.reetrabajo || 0;
+                const comentariosTxt = item.comentarios || '-';
+                let porcentaje = 0;
+                
+                if (estandarNum > 0) {
+                    porcentaje = Math.min(Math.round((prodNum / estandarNum) * 100), 100);
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-cyan-950/40 transition-colors border-b border-gray-800";
+                tr.innerHTML = `
+                    <td class="px-3 py-3 font-bold text-gray-100">${item.troquel}</td>
+                    <td class="px-3 py-3 text-gray-300">${item.area}</td>
+                    <td class="px-3 py-3 text-gray-300">${item.modelo}</td>
+                    <td class="px-3 py-3 text-center text-gray-300">${item.libras || '-'}</td>
+                    <td class="px-3 py-3 text-center font-semibold text-gray-300">${item.estandar}</td>
+                    <td class="px-3 py-3 text-center font-bold text-cyan-400 text-sm bg-cyan-950/50 rounded border border-cyan-800/40">${prodNum}</td>
+                    <td class="px-3 py-3 text-center font-bold text-red-400 text-sm bg-red-950/50 rounded border border-red-800/40">${scrapNum}</td>
+                    <td class="px-3 py-3 text-center font-bold text-amber-400 text-sm bg-amber-950/50 rounded border border-amber-800/40">${reetrabajoNum}</td>
+                    <td class="px-3 py-3 text-gray-300 text-xs italic max-w-xs truncate" title="${comentariosTxt}">${comentariosTxt}</td>
+                    <td class="px-3 py-3 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-16 bg-gray-700 rounded-full h-2 overflow-hidden">
+                                <div class="bg-cyan-500 h-2 rounded-full" style="width: ${porcentaje}%"></div>
+                            </div>
+                            <span class="font-bold text-xs text-gray-200">${porcentaje}%</span>
+                        </div>
+                    </td>
+                `;
+                logContainer.appendChild(tr);
+            });
+        }
+
+        // Recibir mensajes desde LAYOUT.html
+        window.addEventListener('message', (event) => {
+            const { type, payload } = event.data;
+            if (type === 'OPEN_LOG_MODAL') {
+                actualizarTablaCapturas(payload.database);
+                openProductionLogModal();
+            } else if (type === 'OPEN_INLINE_EDITOR') {
+                openInlineEditor(payload.id, payload.data);
+            } else if (type === 'UPDATE_TABLE') {
+                actualizarTablaCapturas(payload.database);
+            }
+        });
+    </script>
+</body>
+</html>

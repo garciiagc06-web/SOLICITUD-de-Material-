@@ -48,7 +48,10 @@
             background-image: none !important;
         }
 
-        .draggable-item { cursor: move; }
+        .draggable-item { 
+            cursor: move; 
+            touch-action: none;
+        }
 
         .pasillo-dinamico::after {
             content: "";
@@ -146,6 +149,9 @@
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
 
+    <!-- IFRAME QUE CARGA EL ARCHIVO DE CAPTURAS -->
+    <iframe id="capturasFrame" src="CAPTURASKK.html" class="fixed inset-0 w-full h-full border-0 pointer-events-none z-50"></iframe>
+
     <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO CON TRABAJO Y MODELO -->
     <div id="saveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-indigo-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
@@ -170,83 +176,20 @@
         </div>
     </div>
 
-    <!-- VENTANA FLOTANTE DE EDICIÓN DIRECTA -->
-    <div id="inlineEditPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-xl relative animate-in fade-in zoom-in duration-200">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h3 class="text-lg font-bold text-cyan-400 flex items-center gap-2">Edición de Información</h3>
-                <button onclick="closeInlineEditor()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <input type="hidden" id="inlineId">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">1. Tipo de Zona Visual</label>
-                    <select id="inlineType" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                        <option value="trabajo">Maquinado</option>
-                        <option value="operacional">Estación de Trabajo</option>
-                        <option value="pasillo">Pasillo / Tránsito</option>
-                        <option value="texto">Texto</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">2. Área / Línea</label>
-                    <input type="text" id="inlineArea" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">3. Modelo</label>
-                    <input type="text" id="inlineModelo" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">4. Sub-Ensamble</label>
-                    <input type="text" id="inlineSubEnsamble" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">5. Medida</label>
-                    <input type="text" id="inlineMedida" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">6. Troquel / Estación</label>
-                    <input type="text" id="inlineTroquel" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">7. Estándar x Hora</label>
-                    <input type="text" id="inlineEstandar" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">8. Op. Requerido</label>
-                    <input type="number" id="inlineOpsReq" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">9. Largo Líneas</label>
-                    <input type="number" id="inlineLength" min="1" max="20" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">10. Ancho Columnas</label>
-                    <input type="number" id="inlineWidth" min="1" max="20" class="input-animado w-full rounded bg-[#121215] border border-gray-600 p-2 text-gray-200 text-xs">
-                </div>
-
-                <div class="flex items-center justify-end space-x-3 md:col-span-2 pt-2 border-t border-gray-700/60">
-                    <button onclick="closeInlineEditor()" class="bg-gray-700/80 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-md border border-gray-500/30 text-sm">Cancelar</button>
-                    <button onclick="saveInlineChanges()" class="bg-blue-600/80 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-md border border-blue-400/30 text-sm">Actualizar Estación</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- VENTANA FLOTANTE: 1. CONTROL DE ESTACIÓN -->
-    <div id="stationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-4xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
-                <h2 id="formTitle" class="text-lg font-bold text-cyan-400 flex items-center gap-2">1. Control de Estación</h2>
-                <button onclick="closeStationModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+    <!-- VENTANA FLOTANTE: 1. CONTROL DE ESTACIÓN (AL DAR UN CLICK) -->
+    <div id="stationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-4 shadow-2xl text-gray-200 w-full max-w-2xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
+                <h2 id="formTitle" class="text-base font-bold text-cyan-400 flex items-center gap-2">1. Control de Estación</h2>
+                <button onclick="closeStationModal()" class="text-gray-400 hover:text-white text-lg font-semibold px-2">&times;</button>
             </div>
             
-            <form id="areaForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end text-sm">
+            <form id="areaForm" class="grid grid-cols-2 md:grid-cols-3 gap-2.5 items-end text-xs">
                 <input type="hidden" id="editingId" value="">
                 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">1. Tipo de Zona Visual</label>
-                    <select id="zoneType" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">1. Tipo Zona Visual</label>
+                    <select id="zoneType" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                         <option value="trabajo">Maquinado</option>
                         <option value="operacional">Estación de Trabajo</option>
                         <option value="pasillo">Pasillo / Tránsito</option>
@@ -255,52 +198,58 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">2. Área / Línea</label>
-                    <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">2. Área / Línea</label>
+                    <input type="text" id="procArea" placeholder="Ej. Línea A" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">3. Modelo</label>
-                    <input type="text" id="procModelo" placeholder="Ej. Mod-X1" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">3. Modelo</label>
+                    <input type="text" id="procModelo" placeholder="Ej. Mod-X1" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">4. Sub-Ensamble</label>
-                    <input type="text" id="procSubEnsamble" placeholder="Ej. Base Inferior" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">4. Sub-Ensamble / Perfil</label>
+                    <input type="text" id="procSubEnsamble" placeholder="Ej. Base Inferior" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">5. Medida</label>
-                    <input type="text" id="procMedida" placeholder="Ej. 1/2 pulg" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">5. Medida</label>
+                    <input type="text" id="procMedida" placeholder="Ej. 1/2 pulg" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">6. Troquel / Estación</label>
-                    <input type="text" id="procTroquel" placeholder="Ej. TR-01" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
+                    <label class="block text-[10px] font-semibold text-gray-300">6. Troquel / Estación</label>
+                    <input type="text" id="procTroquel" placeholder="Ej. TR-01" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs" required>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">7. Estándar x Hora</label>
-                    <input type="text" id="procEstandar" placeholder="Ej. 450" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">7. Libras</label>
+                    <input type="text" id="procLibras" placeholder="Ej. 150 lbs" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">8. Op. Requerido</label>
-                    <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs">
+                    <label class="block text-[10px] font-semibold text-gray-300">8. Estandar x Hora</label>
+                    <input type="text" id="procEstandar" placeholder="Ej. 450" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300">9. Largo Líneas</label>
-                    <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-1 block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
+                    <label class="block text-[10px] font-semibold text-gray-300">9. Op. Requerido</label>
+                    <input type="number" id="procOpsReq" min="0" value="1" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs">
                 </div>
 
-                <div class="md:col-span-2 lg:col-span-3">
-                    <label class="block text-xs font-semibold text-gray-300">10. Ancho Columnas</label>
-                    <div class="flex space-x-2 mt-1">
-                        <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado block w-full rounded-md bg-[#121215] border border-gray-600 text-gray-200 p-2 text-xs" required>
-                        <button type="submit" id="submitBtn" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-2 px-5 rounded-md border border-cyan-400/30 text-xs shadow-md">Agregar</button>
-                        <button type="button" id="cancelBtn" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-3 rounded-md border border-gray-500/30 text-xs" onclick="resetFormState(); closeStationModal();">Cancelar</button>
-                    </div>
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-300">10. Largo Líneas</label>
+                    <input type="number" id="zoneLength" min="1" max="20" value="3" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs" required>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-semibold text-gray-300">11. Ancho Columnas</label>
+                    <input type="number" id="zoneWidth" min="1" max="20" value="4" class="input-animado mt-0.5 block w-full rounded bg-[#121215] border border-gray-600 text-gray-200 py-1 px-2 text-xs" required>
+                </div>
+
+                <div class="flex items-center gap-1.5 pt-1">
+                    <button type="submit" id="submitBtn" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-1 px-3 rounded border border-cyan-400/30 text-xs shadow-md">Agregar</button>
+                    <button type="button" id="cancelBtn" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-semibold py-1 px-2 rounded border border-gray-500/30 text-xs" onclick="resetFormState(); closeStationModal();">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -309,7 +258,6 @@
     <!-- Encabezado con z-index elevado -->
     <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4 relative z-50">
         <div class="flex items-center justify-center md:justify-start space-x-2 relative">
-            <!-- MENÚ NUEVO -->
             <div class="relative inline-block text-left">
                 <button type="button" onclick="toggleNuevoMenu(event)" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center gap-1">
                     📄 Nuevo ▾
@@ -355,6 +303,11 @@
                         Ocultar Cuadrícula
                     </button>
 
+                    <!-- BOTÓN QUE COMUNICA CON CAPTURASKK.HTML -->
+                    <button type="button" onclick="openProductionLogModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-1.5 px-3 rounded-md border border-cyan-400/50 text-xs flex items-center gap-1 shadow-md transition-all">
+                        📊 Capturas de Producción
+                    </button>
+
                     <select id="filterTrabajo" onchange="onTrabajoChange(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
                         <option value="">-- Seleccionar Trabajo --</option>
                     </select>
@@ -383,9 +336,10 @@
                         <tr>
                             <th class="px-3 py-3">Área / Línea</th>
                             <th class="px-3 py-3">Modelo</th>
-                            <th class="px-3 py-3">Sub-Ensamble</th>
+                            <th class="px-3 py-3">Sub-Ensamble / Perfil</th>
                             <th class="px-3 py-3">Medida</th>
                             <th class="px-3 py-3">Troquel / Estación</th>
+                            <th class="px-3 py-3 text-center">Libras</th>
                             <th class="px-3 py-3 text-center">Estd. x Hr</th>
                             <th class="px-3 py-3 text-center">Op. Req.</th>
                             <th class="px-3 py-3 text-center">Dim.</th>
@@ -393,7 +347,7 @@
                         </tr>
                     </thead>
                     <tbody id="inventoryList" class="divide-y divide-gray-200/60 text-gray-800">
-                        <tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>
+                        <tr id="emptyRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -406,18 +360,60 @@
         const canvas = document.getElementById('plantCanvas');
         const inventoryList = document.getElementById('inventoryList');
         const emptyRow = document.getElementById('emptyRow');
+        const iframe = document.getElementById('capturasFrame');
         
         let database = {};
         let objectCount = 0;
-        let firebaseLibraryGlobal = {}; // Guardará la lista que viene de Firebase
+        let firebaseLibraryGlobal = {};
         const scale = 20;
 
         const colorMap = {
-            trabajo: { bg: 'bg-[#000000]', hex: '000000', borderHex: '22C55E', text: 'text-[#22c55e] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#22c55e]', extraClass: '' },
-            operacional: { bg: 'bg-[#000000]', hex: '000000', borderHex: '6B7280', text: 'text-gray-200 font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: '' },
-            pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico' },
-            texto: { bg: 'bg-[#030712]', hex: '030712', borderHex: '00F0FF', text: 'text-[#00f0ff] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#00f0ff]', extraClass: 'texto-brillante' }
+            trabajo: { bg: 'bg-[#000000]', hex: '000000', borderHex: '22C55E', text: 'text-[#22c55e] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#22c55e]', extraClass: '', nombre: 'Maquinado' },
+            operacional: { bg: 'bg-[#000000]', hex: '000000', borderHex: '6B7280', text: 'text-gray-200 font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: '', nombre: 'Estación de Trabajo' },
+            pasillo: { bg: 'bg-[#9ca3af]', hex: '9CA3AF', borderHex: '6b7280', text: 'text-[#111827] font-bold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: 'pasillo-dinamico', nombre: 'Pasillo / Tránsito' },
+            texto: { bg: 'bg-[#030712]', hex: '030712', borderHex: '00F0FF', text: 'text-[#00f0ff] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#00f0ff]', extraClass: 'texto-brillante', nombre: 'Texto' }
         };
+
+        // Comunicaciones con el iframe (CAPTURASKK.html)
+        function toggleIframeEvents(active) {
+            if (active) {
+                iframe.classList.remove('pointer-events-none');
+            } else {
+                iframe.classList.add('pointer-events-none');
+            }
+        }
+
+        function openProductionLogModal() {
+            toggleIframeEvents(true);
+            iframe.contentWindow.postMessage({ type: 'OPEN_LOG_MODAL', payload: { database } }, '*');
+        }
+
+        function openInlineEditor(id) {
+            toggleIframeEvents(true);
+            iframe.contentWindow.postMessage({ type: 'OPEN_INLINE_EDITOR', payload: { id, data: database[id] } }, '*');
+        }
+
+        function actualizarTablaCapturas() {
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'UPDATE_TABLE', payload: { database } }, '*');
+            }
+        }
+
+        window.addEventListener('message', (event) => {
+            const { type, payload } = event.data;
+            if (type === 'SAVE_INLINE_DATA') {
+                const { id, cantidad, scrap, reetrabajo, comentarios } = payload;
+                if (database[id]) {
+                    database[id].cantidadProducida = cantidad;
+                    database[id].cantidadScrap = scrap;
+                    database[id].reetrabajo = reetrabajo;
+                    database[id].comentarios = comentarios;
+                    actualizarTablaCapturas();
+                    alert(`✅ Datos capturados para la estación: ${database[id].troquel}`);
+                }
+                toggleIframeEvents(false);
+            }
+        });
 
         function toggleNuevoMenu(event) {
             event.stopPropagation();
@@ -437,7 +433,8 @@
             inventoryList.innerHTML = '';
 
             if (Object.keys(database).length === 0) {
-                inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+                inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+                actualizarTablaCapturas();
                 return;
             }
 
@@ -458,16 +455,33 @@
                 canvas.appendChild(visualObj);
                 updateVisualObject(id);
                 makeElementDraggableAndResizable(visualObj, id);
-                
-                visualObj.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    openInlineEditor(id);
-                });
+                attachClickEvents(visualObj, id);
 
                 const row = document.createElement('tr');
                 row.id = `row-${id}`;
-                row.innerHTML = generateRowHTML(id, obj.type, obj.area, obj.modelo, obj.subEnsamble, obj.medida, obj.troquel, obj.estandar, obj.opsReq, obj.length, obj.width);
+                row.innerHTML = generateRowHTML(id, obj.type, obj.area, obj.modelo, obj.subEnsamble, obj.medida, obj.troquel, obj.libras, obj.estandar, obj.opsReq, obj.length, obj.width);
                 inventoryList.appendChild(row);
+            });
+
+            actualizarTablaCapturas();
+        }
+
+        function attachClickEvents(element, id) {
+            let clickTimer = null;
+
+            element.addEventListener('click', (e) => {
+                if (e.target.classList.contains('resizer-h') || e.target.classList.contains('resizer-v') || e.target.classList.contains('resizer-both')) return;
+                
+                if (clickTimer === null) {
+                    clickTimer = setTimeout(() => {
+                        clickTimer = null;
+                        startEdit(id);
+                    }, 250);
+                } else {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                    openInlineEditor(id);
+                }
             });
         }
 
@@ -508,7 +522,6 @@
         function openSaveModal() { document.getElementById('saveModal').classList.remove('hidden'); }
         function closeSaveModal() { document.getElementById('saveModal').classList.add('hidden'); }
 
-        // MÉTODOS CONECTADOS A FIREBASE PARA LOS DESPLEGABLES
         function actualizarDesplegablesFiltro() {
             const filterTrabajo = document.getElementById('filterTrabajo');
             const valorTrabajoActual = filterTrabajo.value;
@@ -619,21 +632,26 @@
             const subEnsamble = document.getElementById('procSubEnsamble').value.trim() || '-';
             const medida = document.getElementById('procMedida').value.trim() || '-';
             const troquel = document.getElementById('procTroquel').value.trim();
+            const libras = document.getElementById('procLibras').value.trim() || '-';
             const estandar = document.getElementById('procEstandar').value.trim() || '-';
             const opsReq = document.getElementById('procOpsReq').value || '0';
             const length = parseInt(document.getElementById('zoneLength').value);
             const width = parseInt(document.getElementById('zoneWidth').value);
 
             if (editingId) {
-                database[editingId] = { ...database[editingId], type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width };
+                database[editingId] = { ...database[editingId], type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width };
                 updateVisualObject(editingId);
-                document.getElementById(`row-${editingId}`).innerHTML = generateRowHTML(editingId, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width);
+                document.getElementById(`row-${editingId}`).innerHTML = generateRowHTML(editingId, type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width);
                 resetFormState();
             } else {
                 objectCount++;
                 const currentEmptyRow = document.getElementById('emptyRow');
                 if (currentEmptyRow) currentEmptyRow.style.display = 'none';
-                database[objectCount] = { type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width, x: 20, y: 20 };
+                database[objectCount] = { 
+                    type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width, 
+                    cantidadProducida: 0, cantidadScrap: 0, reetrabajo: 0, comentarios: '', 
+                    x: 20, y: 20 
+                };
 
                 const visualObj = document.createElement('div');
                 visualObj.id = `visual-${objectCount}`;
@@ -650,19 +668,16 @@
                 canvas.appendChild(visualObj);
                 updateVisualObject(objectCount);
                 makeElementDraggableAndResizable(visualObj, objectCount);
-                
-                visualObj.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    openInlineEditor(objectCount);
-                });
+                attachClickEvents(visualObj, objectCount);
 
                 const row = document.createElement('tr');
                 row.id = `row-${objectCount}`;
-                row.innerHTML = generateRowHTML(objectCount, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width);
+                row.innerHTML = generateRowHTML(objectCount, type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width);
                 inventoryList.appendChild(row);
                 form.reset();
             }
 
+            actualizarTablaCapturas();
             closeStationModal();
         });
 
@@ -684,13 +699,14 @@
             if(label) label.innerText = obj.troquel;
         }
 
-        function generateRowHTML(id, type, area, modelo, subEnsamble, medida, troquel, estandar, opsReq, length, width) {
+        function generateRowHTML(id, type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width) {
             return `
                 <td class="px-3 py-3 font-semibold text-gray-900">${area}</td>
                 <td class="px-3 py-3 text-gray-800">${modelo}</td>
                 <td class="px-3 py-3 text-gray-800">${subEnsamble}</td>
                 <td class="px-3 py-3 text-gray-800">${medida}</td>
                 <td class="px-3 py-3 font-semibold text-gray-900">${troquel}</td>
+                <td class="px-3 py-3 text-center text-gray-700">${libras}</td>
                 <td class="px-3 py-3 text-center text-gray-700">${estandar}</td>
                 <td class="px-3 py-3 text-center text-gray-700">${opsReq}</td>
                 <td class="px-3 py-3 text-center text-gray-600">${width}x${length}</td>
@@ -751,7 +767,7 @@
                     
                     document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
                         id, database[id].type, database[id].area, database[id].modelo, database[id].subEnsamble,
-                        database[id].medida, database[id].troquel, database[id].estandar, database[id].opsReq,
+                        database[id].medida, database[id].troquel, database[id].libras, database[id].estandar, database[id].opsReq,
                         finalLengthBlocks, finalWidthBlocks
                     );
                 };
@@ -764,77 +780,50 @@
             rv.addEventListener('mousedown', (e) => initResize(e, false, true));
             rb.addEventListener('mousedown', (e) => initResize(e, true, true));
 
-            elmnt.onmousedown = (e) => {
-                if (e.target.classList.contains('resizer-h') || e.target.classList.contains('resizer-v') || e.target.classList.contains('resizer-both')) return;
+            elmnt.onpointerdown = (e) => {
+                if (e.target.classList.contains('resizer-h') || 
+                    e.target.classList.contains('resizer-v') || 
+                    e.target.classList.contains('resizer-both')) return;
                 
                 e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
+                elmnt.setPointerCapture(e.pointerId);
+
+                const rect = elmnt.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
                 
-                document.onmousemove = (moveEvent) => {
-                    pos1 = pos3 - moveEvent.clientX;
-                    pos2 = pos4 - moveEvent.clientY;
-                    pos3 = moveEvent.clientX;
-                    pos4 = moveEvent.clientY;
-                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+
+                const onPointerMove = (moveEvent) => {
+                    let newX = moveEvent.clientX - canvasRect.left - offsetX;
+                    let newY = moveEvent.clientY - canvasRect.top - offsetY;
+
+                    newX = Math.round(newX / scale) * scale;
+                    newY = Math.round(newY / scale) * scale;
+
+                    const maxX = canvas.clientWidth - elmnt.offsetWidth;
+                    const maxY = canvas.clientHeight - elmnt.offsetHeight;
+
+                    newX = Math.max(0, Math.min(newX, maxX));
+                    newY = Math.max(0, Math.min(newY, maxY));
+
+                    elmnt.style.left = `${newX}px`;
+                    elmnt.style.top = `${newY}px`;
                 };
-                
-                document.onmouseup = () => {
-                    document.onmouseup = null;
-                    document.onmousemove = null;
-                    database[id].x = Math.round(elmnt.offsetLeft / scale) * scale;
-                    database[id].y = Math.round(elmnt.offsetTop / scale) * scale;
-                    elmnt.style.left = database[id].x + "px";
-                    elmnt.style.top = database[id].y + "px";
+
+                const onPointerUp = (upEvent) => {
+                    elmnt.releasePointerCapture(upEvent.pointerId);
+                    elmnt.onpointermove = null;
+                    elmnt.onpointerup = null;
+
+                    database[id].x = parseInt(elmnt.style.left) || 0;
+                    database[id].y = parseInt(elmnt.style.top) || 0;
                 };
+
+                elmnt.onpointermove = onPointerMove;
+                elmnt.onpointerup = onPointerUp;
             };
         }
-
-        window.openInlineEditor = function(id) {
-            const data = database[id];
-            document.getElementById('inlineId').value = id;
-            document.getElementById('inlineType').value = data.type;
-            document.getElementById('inlineArea').value = data.area;
-            document.getElementById('inlineModelo').value = data.modelo;
-            document.getElementById('inlineSubEnsamble').value = data.subEnsamble;
-            document.getElementById('inlineMedida').value = data.medida;
-            document.getElementById('inlineTroquel').value = data.troquel;
-            document.getElementById('inlineEstandar').value = data.estandar;
-            document.getElementById('inlineOpsReq').value = data.opsReq;
-            document.getElementById('inlineLength').value = data.length;
-            document.getElementById('inlineWidth').value = data.width;
-            
-            document.getElementById('inlineEditPanel').classList.remove('hidden');
-        };
-
-        window.closeInlineEditor = function() {
-            document.getElementById('inlineEditPanel').classList.add('hidden');
-        };
-
-        window.saveInlineChanges = function() {
-            const id = document.getElementById('inlineId').value;
-            if(!id) return;
-
-            database[id].type = document.getElementById('inlineType').value;
-            database[id].area = document.getElementById('inlineArea').value.trim() || '-';
-            database[id].modelo = document.getElementById('inlineModelo').value.trim() || '-';
-            database[id].subEnsamble = document.getElementById('inlineSubEnsamble').value.trim() || '-';
-            database[id].medida = document.getElementById('inlineMedida').value.trim() || '-';
-            database[id].troquel = document.getElementById('inlineTroquel').value.trim();
-            database[id].estandar = document.getElementById('inlineEstandar').value.trim() || '-';
-            database[id].opsReq = document.getElementById('inlineOpsReq').value || '0';
-            database[id].length = parseInt(document.getElementById('inlineLength').value) || 1;
-            database[id].width = parseInt(document.getElementById('inlineWidth').value) || 1;
-
-            updateVisualObject(id);
-            document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
-                id, database[id].type, database[id].area, database[id].modelo, database[id].subEnsamble,
-                database[id].medida, database[id].troquel, database[id].estandar, database[id].opsReq,
-                database[id].length, database[id].width
-            );
-            closeInlineEditor();
-        };
 
         window.startEdit = function(id) {
             const data = database[id];
@@ -845,6 +834,7 @@
             document.getElementById('procSubEnsamble').value = data.subEnsamble;
             document.getElementById('procMedida').value = data.medida;
             document.getElementById('procTroquel').value = data.troquel;
+            document.getElementById('procLibras').value = data.libras || '';
             document.getElementById('procEstandar').value = data.estandar;
             document.getElementById('procOpsReq').value = data.opsReq;
             document.getElementById('zoneLength').value = data.length;
@@ -869,6 +859,7 @@
             if(row) row.remove();
             delete database[id];
             if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
+            actualizarTablaCapturas();
         };
 
         async function exportarLayoutAExcel() {
@@ -924,7 +915,7 @@
             const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E1E24' } };
             const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
             
-            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble", "Medida", "Troquel / Estación", "Estándar x Hora", "Op. Requerido"];
+            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble / Perfil", "Medida", "Troquel / Estación", "Libras", "Estándar x Hora", "Op. Requerido", "QTY Producida", "QTY Scrap", "Reetrabajo", "Comentarios"];
             
             sheet2.getRow(2).height = 25;
             headers.forEach((h, index) => {
@@ -947,8 +938,13 @@
                     obj.subEnsamble,
                     obj.medida,
                     obj.troquel,
+                    obj.libras || '-',
                     obj.estandar,
-                    parseInt(obj.opsReq)
+                    parseInt(obj.opsReq),
+                    obj.cantidadProducida || 0,
+                    obj.cantidadScrap || 0,
+                    obj.reetrabajo || 0,
+                    obj.comentarios || '-'
                 ];
 
                 values.forEach((val, index) => {
@@ -957,7 +953,7 @@
                     cell.font = { name: 'Arial', size: 10 };
                     cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
                     
-                    if (index >= 5) {
+                    if (index >= 5 && index <= 10) {
                         cell.alignment = { horizontal: 'center', vertical: 'center' };
                     } else {
                         cell.alignment = { horizontal: 'left', vertical: 'center' };
@@ -998,7 +994,6 @@
         const db = getFirestore(app);
         const layoutsCollection = collection(db, "industrial_layouts");
 
-        // Escucha cambios en Firebase en tiempo real para que todos vean los mismos Trabajos/Modelos
         onSnapshot(layoutsCollection, (snapshot) => {
             firebaseLibraryGlobal = {};
             snapshot.forEach((doc) => {
@@ -1009,7 +1004,6 @@
             console.error("Error escuchando Firebase:", error);
         });
 
-        // Guardar un modelo/trabajo específico en Firebase
         window.guardarLayoutEnFirebaseCloud = async function(trabajo, modelo) {
             const storageKey = `${trabajo}___${modelo}`;
             try {
@@ -1024,7 +1018,6 @@
                 closeSaveModal();
                 alert(`✅ ¡Trabajo "${trabajo}" (Modelo: ${modelo}) guardado exitosamente en la nube! Cualesquiera personas con el enlace lo podrán seleccionar.`);
                 
-                // Seleccionar automáticamente en los desplegables
                 document.getElementById('filterTrabajo').value = trabajo;
                 onTrabajoChange(trabajo);
                 document.getElementById('filterModelo').value = storageKey;
@@ -1034,7 +1027,6 @@
             }
         };
 
-        // Borrar un modelo de Firebase
         window.borrarLayoutDeFirebaseCloud = async function(storageKey) {
             try {
                 await deleteDoc(doc(db, "industrial_layouts", storageKey));
