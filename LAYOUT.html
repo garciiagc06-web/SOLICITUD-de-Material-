@@ -145,14 +145,19 @@
             border-color: #2563eb !important;
             box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
         }
+
+        #plantCanvas {
+            height: 800px !important;
+            min-height: 800px;
+        }
     </style>
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
 
     <!-- IFRAME QUE CARGA EL ARCHIVO DE CAPTURAS -->
-    <iframe id="capturasFrame" src="CAPTURASKK.html" class="fixed inset-0 w-full h-full border-0 pointer-events-none z-50"></iframe>
+    <iframe id="capturasFrame" src="CAPTURASKK.html" class="fixed inset-0 w-full h-full border-0 z-50 pointer-events-none"></iframe>
 
-    <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO CON TRABAJO Y MODELO -->
+    <!-- VENTANA FLOTANTE 1: GUARDAR PROYECTO EN LA NUBE -->
     <div id="saveModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
         <div class="bg-[#18181c] border-2 border-indigo-500 rounded-xl p-6 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
@@ -176,7 +181,7 @@
         </div>
     </div>
 
-    <!-- VENTANA FLOTANTE: 1. CONTROL DE ESTACIÓN (AL DAR UN CLICK) -->
+    <!-- VENTANA FLOTANTE: 1. CONTROL DE ESTACIÓN -->
     <div id="stationModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
         <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-4 shadow-2xl text-gray-200 w-full max-w-2xl relative animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-3">
@@ -255,7 +260,7 @@
         </div>
     </div>
 
-    <!-- Encabezado con z-index elevado -->
+    <!-- ENCABEZADO -->
     <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4 relative z-50">
         <div class="flex items-center justify-center md:justify-start space-x-2 relative">
             <div class="relative inline-block text-left">
@@ -290,10 +295,10 @@
         </div>
     </header>
 
-    <!-- Contenedor Principal -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <div class="max-w-7xl mx-auto p-4 space-y-6">
 
-        <!-- 2. VISTA PRELIMINAR -->
+        <!-- VISTA PRELIMINAR -->
         <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full relative">
             <div class="flex flex-wrap justify-between items-center mb-2 gap-3">
                 <h2 class="text-xl font-semibold">2. Vista Preliminar</h2>
@@ -303,9 +308,8 @@
                         Ocultar Cuadrícula
                     </button>
 
-                    <!-- BOTÓN QUE COMUNICA CON CAPTURASKK.HTML -->
                     <button type="button" onclick="openProductionLogModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-1.5 px-3 rounded-md border border-cyan-400/50 text-xs flex items-center gap-1 shadow-md transition-all">
-                        📊 Capturas de Producción
+                     Capturas
                     </button>
 
                     <select id="filterTrabajo" onchange="onTrabajoChange(this.value)" class="input-animado rounded-md bg-white/70 border border-gray-500 text-gray-900 p-1.5 text-xs font-semibold focus:border-cyan-500">
@@ -322,12 +326,12 @@
                 </div>
             </div>
 
-            <div id="plantCanvas" class="relative w-full h-[550px] bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-hidden shadow-inner backdrop-blur-sm">
+            <div id="plantCanvas" class="relative w-full bg-[#000000] rounded border-2 border-dashed border-[#008ba3] grid-bg overflow-y-auto shadow-inner backdrop-blur-sm">
                 <!-- Objetos dinámicos -->
             </div>
         </div>
 
-        <!-- 3. LISTADO DE CONTROL OPERATIVO -->
+        <!-- LISTADO DE CONTROL OPERATIVO -->
         <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full">
             <h2 class="text-xl font-semibold mb-4">3. Listado de Control Operativo</h2>
             <div class="overflow-x-auto rounded border border-gray-400/60 bg-white/40 shadow-sm backdrop-blur-md">
@@ -374,7 +378,6 @@
             texto: { bg: 'bg-[#030712]', hex: '030712', borderHex: '00F0FF', text: 'text-[#00f0ff] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#00f0ff]', extraClass: 'texto-brillante', nombre: 'Texto' }
         };
 
-        // Comunicaciones con el iframe (CAPTURASKK.html)
         function toggleIframeEvents(active) {
             if (active) {
                 iframe.classList.remove('pointer-events-none');
@@ -390,7 +393,16 @@
 
         function openInlineEditor(id) {
             toggleIframeEvents(true);
-            iframe.contentWindow.postMessage({ type: 'OPEN_INLINE_EDITOR', payload: { id, data: database[id] } }, '*');
+
+            // Crear una copia enviando los campos en 0 para la captura flotante
+            const payloadData = { 
+                ...database[id],
+                cantidadProducida: 0,
+                cantidadScrap: 0,
+                reetrabajo: 0
+            };
+
+            iframe.contentWindow.postMessage({ type: 'OPEN_INLINE_EDITOR', payload: { id, data: payloadData } }, '*');
         }
 
         function actualizarTablaCapturas() {
@@ -400,25 +412,35 @@
         }
 
         window.addEventListener('message', (event) => {
-            const { type, payload } = event.data;
+            const { type, payload } = event.data || {};
             if (type === 'SAVE_INLINE_DATA') {
-                const { id, cantidad, scrap, reetrabajo, comentarios } = payload;
+                const { id, cantidad, scrap, reetrabajo, comentarios, fecha, hora } = payload;
                 if (database[id]) {
+                    // Guardar los datos recibidos
                     database[id].cantidadProducida = cantidad;
                     database[id].cantidadScrap = scrap;
                     database[id].reetrabajo = reetrabajo;
                     database[id].comentarios = comentarios;
+                    database[id].ultimaFecha = fecha;
+                    database[id].ultimaHora = hora;
+
                     actualizarTablaCapturas();
-                    alert(`✅ Datos capturados para la estación: ${database[id].troquel}`);
+                    alert(`✅ Datos capturados para la estación: ${database[id].troquel}\nFecha: ${fecha}\nHora: ${hora}`);
+
+                    // Resetear los valores a 0 inmediatamente para nuevas capturas
+                    database[id].cantidadProducida = 0;
+                    database[id].cantidadScrap = 0;
+                    database[id].reetrabajo = 0;
                 }
+                toggleIframeEvents(false);
+            } else if (type === 'CLOSE_LOG_MODAL' || type === 'CLOSE_INLINE_EDITOR') {
                 toggleIframeEvents(false);
             }
         });
 
         function toggleNuevoMenu(event) {
             event.stopPropagation();
-            const menu = document.getElementById('nuevoMenu');
-            menu.classList.toggle('hidden');
+            document.getElementById('nuevoMenu').classList.toggle('hidden');
         }
 
         document.addEventListener('click', (e) => {
@@ -915,7 +937,7 @@
             const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E1E24' } };
             const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
             
-            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble / Perfil", "Medida", "Troquel / Estación", "Libras", "Estándar x Hora", "Op. Requerido", "QTY Producida", "QTY Scrap", "Reetrabajo", "Comentarios"];
+            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble / Perfil", "Medida", "Troquel / Estación", "Libras", "Estándar x Hora", "Op. Requerido", "QTY Producida", "QTY Scrap", "Reetrabajo", "Comentarios", "Última Fecha", "Última Hora"];
             
             sheet2.getRow(2).height = 25;
             headers.forEach((h, index) => {
@@ -944,7 +966,9 @@
                     obj.cantidadProducida || 0,
                     obj.cantidadScrap || 0,
                     obj.reetrabajo || 0,
-                    obj.comentarios || '-'
+                    obj.comentarios || '-',
+                    obj.ultimaFecha || '-',
+                    obj.ultimaHora || '-'
                 ];
 
                 values.forEach((val, index) => {
@@ -975,7 +999,7 @@
         }
     </script>
 
-    <!-- INTEGRACIÓN CENTRALIZADA CON FIREBASE EN TIEMPO REAL -->
+    <!-- INTEGRACIÓN CON FIREBASE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -1016,7 +1040,7 @@
                 });
 
                 closeSaveModal();
-                alert(`✅ ¡Trabajo "${trabajo}" (Modelo: ${modelo}) guardado exitosamente en la nube! Cualesquiera personas con el enlace lo podrán seleccionar.`);
+                alert(`✅ ¡Trabajo "${trabajo}" (Modelo: ${modelo}) guardado exitosamente en la nube!`);
                 
                 document.getElementById('filterTrabajo').value = trabajo;
                 onTrabajoChange(trabajo);
