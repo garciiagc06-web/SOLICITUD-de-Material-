@@ -106,7 +106,7 @@
 
     <!-- MODAL DE LISTADO HISTÓRICO Y GENERAL DE CAPTURAS -->
     <div id="logModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-5 shadow-2xl w-full max-w-5xl relative max-h-[90vh] flex flex-col">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-5 shadow-2xl w-full max-w-6xl relative max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
                 <h3 class="text-lg font-bold text-cyan-400">📊 Control y Registro de Capturas de Producción</h3>
                 <button onclick="cerrarLogModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
@@ -116,18 +116,21 @@
                 <table class="w-full text-left text-xs text-gray-200">
                     <thead class="bg-gray-800 text-cyan-300 sticky top-0 font-bold border-b border-gray-700">
                         <tr>
-                            <th class="p-2.5">Fecha</th>
-                            <th class="p-2.5">Hora (Rango)</th>
-                            <th class="p-2.5">Estación / Troquel</th>
-                            <th class="p-2.5 text-center">QTY Producida</th>
-                            <th class="p-2.5 text-center">QTY Scrap</th>
-                            <th class="p-2.5 text-center">Reetrabajo</th>
-                            <th class="p-2.5">Comentarios</th>
+                            <th class="p-2.5">FECHA</th>
+                            <th class="p-2.5">HORA (RANGO)</th>
+                            <th class="p-2.5">ESTACIÓN / TROQUEL</th>
+                            <th class="p-2.5">SUB-ENSAMBLE / PERFIL</th>
+                            <th class="p-2.5">MEDIDA</th>
+                            <th class="p-2.5 text-center">LIBRA</th>
+                            <th class="p-2.5 text-center">QTY PRODUCIDA</th>
+                            <th class="p-2.5 text-center">QTY SCRAP</th>
+                            <th class="p-2.5 text-center">QTY RETRABAJO</th>
+                            <th class="p-2.5">COMENTARIOS</th>
                         </tr>
                     </thead>
                     <tbody id="tablaHistorialBody" class="divide-y divide-gray-800 bg-[#121215]">
                         <tr>
-                            <td colspan="7" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
+                            <td colspan="10" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -139,8 +142,48 @@
         </div>
     </div>
 
+    <!-- FIREBASE PARA CAPTURASKK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL1kcdZGBAaETrq2H6Qbwq-QEwzPIJ5WY",
+            authDomain: "layout-71405.firebaseapp.com",
+            projectId: "layout-71405",
+            storageBucket: "layout-71405.firebasestorage.app",
+            messagingSenderId: "1522652969",
+            appId: "1:1522652969:web:d22d37beeb8a3149acc938",
+            measurementId: "G-KXCZGWX98N"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const capturasCollection = collection(db, "capturas_produccion");
+
+        // Escuchar capturas en tiempo real desde Firebase
+        const q = query(capturasCollection, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            window.historialCapturas = [];
+            snapshot.forEach((doc) => {
+                window.historialCapturas.push({ idDoc: doc.id, ...doc.data() });
+            });
+            if (typeof window.renderizarTablaHistorial === 'function') {
+                window.renderizarTablaHistorial();
+            }
+        });
+
+        window.guardarEnFirebaseCaptura = async function(registro) {
+            try {
+                await addDoc(capturasCollection, registro);
+            } catch (error) {
+                console.error("Error guardando captura en Firebase:", error);
+            }
+        };
+    </script>
+
     <script>
-        let historialCapturas = [];
+        window.historialCapturas = [];
         let currentDatabase = {};
         let librasUnitariasBase = 0;
 
@@ -184,17 +227,14 @@
             document.getElementById('capturaReetrabajo').value = data.reetrabajo || 0;
             document.getElementById('capturaComentarios').value = data.comentarios || '';
 
-            // Cargar Datos de Lectura en el Panel Derecho
             document.getElementById('readModelo').innerText = data.modelo || '-';
             document.getElementById('readSubEnsamble').innerText = data.subEnsamble || '-';
             document.getElementById('readTroquel').innerText = data.troquel || '-';
             document.getElementById('readMedida').innerText = data.medida || '-';
 
-            // Extraer el valor numérico de libras
             const librasRaw = (data.libras || '').toString().replace(/[^0-9.]/g, '');
             librasUnitariasBase = parseFloat(librasRaw) || 0;
 
-            // Calcular Libras iniciales
             calcularLibrasTotales();
 
             document.getElementById('inlineEditorModal').classList.remove('hidden');
@@ -216,7 +256,7 @@
             window.parent.postMessage({ type: 'CLOSE_LOG_MODAL' }, '*');
         }
 
-        function guardarDatosCaptura(e) {
+        async function guardarDatosCaptura(e) {
             e.preventDefault();
             const id = document.getElementById('estacionId').value;
             const fecha = document.getElementById('capturaFecha').value;
@@ -226,11 +266,15 @@
             const reetrabajo = parseInt(document.getElementById('capturaReetrabajo').value) || 0;
             const comentarios = document.getElementById('capturaComentarios').value.trim();
 
-            const troquelNombre = currentDatabase[id] ? currentDatabase[id].troquel : `Estación #${id}`;
+            const estacionData = currentDatabase[id] || {};
+            const troquelNombre = estacionData.troquel || `Estación #${id}`;
 
             const nuevoRegistro = {
                 id: id,
                 troquel: troquelNombre,
+                subEnsamble: estacionData.subEnsamble || '-',
+                medida: estacionData.medida || '-',
+                libras: estacionData.libras || '-',
                 fecha: fecha,
                 hora: hora,
                 cantidad: cantidad,
@@ -240,42 +284,58 @@
                 timestamp: Date.now()
             };
 
-            historialCapturas.unshift(nuevoRegistro);
+            // Guardar en Firestore directamente
+            if (window.guardarEnFirebaseCaptura) {
+                await window.guardarEnFirebaseCaptura(nuevoRegistro);
+            }
 
             window.parent.postMessage({
                 type: 'SAVE_INLINE_DATA',
-                payload: { id, cantidad, scrap, reetrabajo, comentarios, fecha, hora }
+                payload: { 
+                    id, 
+                    cantidad, 
+                    scrap, 
+                    reetrabajo, 
+                    comentarios, 
+                    fecha, 
+                    hora,
+                    subEnsamble: estacionData.subEnsamble || '-',
+                    medida: estacionData.medida || '-',
+                    libras: estacionData.libras || '-'
+                }
             }, '*');
 
             cerrarInlineEditor();
         }
 
-        function renderizarTablaHistorial() {
+        window.renderizarTablaHistorial = function() {
             const tbody = document.getElementById('tablaHistorialBody');
+            if(!tbody) return;
             tbody.innerHTML = '';
 
-            if (historialCapturas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
+            if (!window.historialCapturas || window.historialCapturas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
                 return;
             }
 
-            historialCapturas.sort((a, b) => b.timestamp - a.timestamp);
-
-            historialCapturas.forEach((reg) => {
+            window.historialCapturas.forEach((reg) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-800/50 transition-colors";
                 tr.innerHTML = `
-                    <td class="p-2.5 font-medium text-cyan-400">${reg.fecha}</td>
-                    <td class="p-2.5 font-medium text-amber-300">${reg.hora}</td>
-                    <td class="p-2.5 font-semibold text-gray-100">${reg.troquel}</td>
-                    <td class="p-2.5 text-center font-bold text-emerald-400">${reg.cantidad}</td>
-                    <td class="p-2.5 text-center text-red-400">${reg.scrap}</td>
-                    <td class="p-2.5 text-center text-yellow-400">${reg.reetrabajo}</td>
+                    <td class="p-2.5 font-medium text-cyan-400">${reg.fecha || '-'}</td>
+                    <td class="p-2.5 font-medium text-amber-300">${reg.hora || '-'}</td>
+                    <td class="p-2.5 font-semibold text-gray-100">${reg.troquel || '-'}</td>
+                    <td class="p-2.5 text-gray-300">${reg.subEnsamble || '-'}</td>
+                    <td class="p-2.5 text-gray-300">${reg.medida || '-'}</td>
+                    <td class="p-2.5 text-center text-emerald-300 font-bold">${reg.libras || '-'}</td>
+                    <td class="p-2.5 text-center font-bold text-emerald-400">${reg.cantidad ?? 0}</td>
+                    <td class="p-2.5 text-center text-red-400">${reg.scrap ?? 0}</td>
+                    <td class="p-2.5 text-center text-yellow-400">${reg.reetrabajo ?? 0}</td>
                     <td class="p-2.5 text-gray-400 truncate max-w-xs">${reg.comentarios || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
-        }
+        };
 
         window.addEventListener('message', (event) => {
             const { type, payload } = event.data || {};

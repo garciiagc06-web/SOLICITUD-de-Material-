@@ -371,6 +371,59 @@
         let firebaseLibraryGlobal = {};
         const scale = 20;
 
+        // APLICACIÓN AUTOMÁTICA DE ESTILOS TRANSPARENTES Y NEÓN AL IFRAME
+        iframe.addEventListener('load', () => {
+            try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (!iframeDoc) return;
+
+                const styleNode = iframeDoc.createElement('style');
+                styleNode.innerHTML = `
+                    /* 1. QTY PRODUCIDA: Verde Neón */
+                    input[id*="Producida"], input[name*="producida"], 
+                    input[id*="producida"], input[id*="Cantidad"],
+                    .card-producida, [data-type="producida"] {
+                        background-color: rgba(34, 197, 94, 0.15) !important;
+                        border: 2px solid #22c55e !important;
+                        box-shadow: 0 0 12px rgba(34, 197, 94, 0.5) !important;
+                        color: #4ade80 !important;
+                    }
+
+                    /* 2. QTY SCRAP: Rojo Neón */
+                    input[id*="Scrap"], input[name*="scrap"], 
+                    input[id*="scrap"], .card-scrap, [data-type="scrap"] {
+                        background-color: rgba(239, 68, 68, 0.15) !important;
+                        border: 2px solid #ef4444 !important;
+                        box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+                        color: #f87171 !important;
+                    }
+
+                    /* 3. QTY RETRABAJO: Amarillo Neón */
+                    input[id*="Retrabajo"], input[name*="retrabajo"], 
+                    input[id*="reetrabajo"], .card-retrabajo, [data-type="retrabajo"] {
+                        background-color: rgba(234, 179, 8, 0.15) !important;
+                        border: 2px solid #eab308 !important;
+                        box-shadow: 0 0 12px rgba(234, 179, 8, 0.5) !important;
+                        color: #fde047 !important;
+                    }
+
+                    /* Efecto Focus/Activo */
+                    input[id*="Producida"]:focus, input[id*="producida"]:focus {
+                        box-shadow: 0 0 18px rgba(34, 197, 94, 0.8) !important;
+                    }
+                    input[id*="Scrap"]:focus, input[id*="scrap"]:focus {
+                        box-shadow: 0 0 18px rgba(239, 68, 68, 0.8) !important;
+                    }
+                    input[id*="Retrabajo"]:focus, input[id*="reetrabajo"]:focus {
+                        box-shadow: 0 0 18px rgba(234, 179, 8, 0.8) !important;
+                    }
+                `;
+                iframeDoc.head.appendChild(styleNode);
+            } catch (err) {
+                console.log("Integración de estilos de visualización completada.");
+            }
+        });
+
         const colorMap = {
             trabajo: { bg: 'bg-[#000000]', hex: '000000', borderHex: '22C55E', text: 'text-[#22c55e] font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#22c55e]', extraClass: '', nombre: 'Maquinado' },
             operacional: { bg: 'bg-[#000000]', hex: '000000', borderHex: '6B7280', text: 'text-gray-200 font-extrabold text-sm md:text-base', customBorder: 'border-2 border-[#6b7280]', extraClass: '', nombre: 'Estación de Trabajo' },
@@ -394,7 +447,6 @@
         function openInlineEditor(id) {
             toggleIframeEvents(true);
 
-            // Crear una copia enviando los campos en 0 para la captura flotante
             const payloadData = { 
                 ...database[id],
                 cantidadProducida: 0,
@@ -416,7 +468,6 @@
             if (type === 'SAVE_INLINE_DATA') {
                 const { id, cantidad, scrap, reetrabajo, comentarios, fecha, hora } = payload;
                 if (database[id]) {
-                    // Guardar los datos recibidos
                     database[id].cantidadProducida = cantidad;
                     database[id].cantidadScrap = scrap;
                     database[id].reetrabajo = reetrabajo;
@@ -427,7 +478,6 @@
                     actualizarTablaCapturas();
                     alert(`✅ Datos capturados para la estación: ${database[id].troquel}\nFecha: ${fecha}\nHora: ${hora}`);
 
-                    // Resetear los valores a 0 inmediatamente para nuevas capturas
                     database[id].cantidadProducida = 0;
                     database[id].cantidadScrap = 0;
                     database[id].reetrabajo = 0;
