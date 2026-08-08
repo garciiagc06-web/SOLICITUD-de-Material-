@@ -39,19 +39,23 @@
                             </div>
                         </div>
 
-                        <!-- QTY PRODUCIDA, SCRAP Y REETRABAJO -->
-                        <div class="grid grid-cols-3 gap-2">
+                        <!-- QTY BUENAS, SCRAP, REETRABAJO Y CAMPO EXTRA TM -->
+                        <div class="grid grid-cols-4 gap-2">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">QTY Producida</label>
-                                <input type="number" id="capturaCantidad" min="0" value="0" oninput="calcularLibrasTotales()" class="w-full rounded bg-[#121215] border border-gray-600 text-gray-100 p-2 text-xs focus:border-cyan-500 focus:outline-none" required>
+                                <label class="block text-xs font-semibold text-emerald-400 mb-1">QTY BUENAS</label>
+                                <input type="number" id="capturaCantidad" min="0" value="0" oninput="calcularLibrasTotales()" class="w-full rounded bg-[#121215] border-2 border-emerald-500/80 text-emerald-300 p-2 text-xs font-bold focus:border-emerald-400 focus:outline-none shadow-[0_0_8px_rgba(16,185,129,0.4)]" required>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">QTY Scrap</label>
-                                <input type="number" id="capturaScrap" min="0" value="0" class="w-full rounded bg-[#121215] border border-gray-600 text-gray-100 p-2 text-xs focus:border-cyan-500 focus:outline-none">
+                                <label class="block text-xs font-semibold text-red-400 mb-1">QTY SCRAP</label>
+                                <input type="number" id="capturaScrap" min="0" value="0" class="w-full rounded bg-[#121215] border-2 border-red-500/80 text-red-300 p-2 text-xs font-bold focus:border-red-400 focus:outline-none shadow-[0_0_8px_rgba(239,68,68,0.4)]">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-300 mb-1">Reetrabajo</label>
-                                <input type="number" id="capturaReetrabajo" min="0" value="0" class="w-full rounded bg-[#121215] border border-gray-600 text-gray-100 p-2 text-xs focus:border-cyan-500 focus:outline-none">
+                                <label class="block text-xs font-semibold text-yellow-400 mb-1">REETRABAJO</label>
+                                <input type="number" id="capturaReetrabajo" min="0" value="0" class="w-full rounded bg-[#121215] border-2 border-yellow-500/80 text-yellow-300 p-2 text-xs font-bold focus:border-yellow-400 focus:outline-none shadow-[0_0_8px_rgba(234,179,8,0.4)]">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-red-400 mb-1">TM</label>
+                                <input type="number" id="capturaTm" min="0" value="0" class="w-full rounded bg-[#121215] border-2 border-red-500/80 text-red-300 p-2 text-xs font-bold focus:border-red-400 focus:outline-none shadow-[0_0_8px_rgba(239,68,68,0.4)]">
                             </div>
                         </div>
 
@@ -122,15 +126,16 @@
                             <th class="p-2.5">SUB-ENSAMBLE / PERFIL</th>
                             <th class="p-2.5">MEDIDA</th>
                             <th class="p-2.5 text-center">LIBRA</th>
-                            <th class="p-2.5 text-center">QTY PRODUCIDA</th>
+                            <th class="p-2.5 text-center">QTY BUENAS</th>
                             <th class="p-2.5 text-center">QTY SCRAP</th>
                             <th class="p-2.5 text-center">QTY RETRABAJO</th>
+                            <th class="p-2.5 text-center">TM</th>
                             <th class="p-2.5">COMENTARIOS</th>
                         </tr>
                     </thead>
                     <tbody id="tablaHistorialBody" class="divide-y divide-gray-800 bg-[#121215]">
                         <tr>
-                            <td colspan="10" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
+                            <td colspan="11" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -225,6 +230,7 @@
             document.getElementById('capturaCantidad').value = data.cantidadProducida || 0;
             document.getElementById('capturaScrap').value = data.cantidadScrap || 0;
             document.getElementById('capturaReetrabajo').value = data.reetrabajo || 0;
+            document.getElementById('capturaTm').value = data.tm || 0;
             document.getElementById('capturaComentarios').value = data.comentarios || '';
 
             document.getElementById('readModelo').innerText = data.modelo || '-';
@@ -264,6 +270,7 @@
             const cantidad = parseInt(document.getElementById('capturaCantidad').value) || 0;
             const scrap = parseInt(document.getElementById('capturaScrap').value) || 0;
             const reetrabajo = parseInt(document.getElementById('capturaReetrabajo').value) || 0;
+            const tm = parseInt(document.getElementById('capturaTm').value) || 0;
             const comentarios = document.getElementById('capturaComentarios').value.trim();
 
             const estacionData = currentDatabase[id] || {};
@@ -280,6 +287,7 @@
                 cantidad: cantidad,
                 scrap: scrap,
                 reetrabajo: reetrabajo,
+                tm: tm,
                 comentarios: comentarios,
                 timestamp: Date.now()
             };
@@ -296,6 +304,7 @@
                     cantidad, 
                     scrap, 
                     reetrabajo, 
+                    tm,
                     comentarios, 
                     fecha, 
                     hora,
@@ -314,7 +323,7 @@
             tbody.innerHTML = '';
 
             if (!window.historialCapturas || window.historialCapturas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
                 return;
             }
 
@@ -331,6 +340,7 @@
                     <td class="p-2.5 text-center font-bold text-emerald-400">${reg.cantidad ?? 0}</td>
                     <td class="p-2.5 text-center text-red-400">${reg.scrap ?? 0}</td>
                     <td class="p-2.5 text-center text-yellow-400">${reg.reetrabajo ?? 0}</td>
+                    <td class="p-2.5 text-center text-red-400 font-bold">${reg.tm ?? 0}</td>
                     <td class="p-2.5 text-gray-400 truncate max-w-xs">${reg.comentarios || '-'}</td>
                 `;
                 tbody.appendChild(tr);

@@ -285,7 +285,7 @@
             </button>
         </div>
         <div class="text-center">
-            <h1 class="text-2xl font-bold tracking-wide text-gray-100">Diseñador de Layout Industrial</h1>
+            <h1 class="text-2xl font-bold tracking-wide text-gray-100">LAYOUT</h1>
             <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
         </div>
         <div class="flex justify-center md:justify-end items-center space-x-2">
@@ -371,7 +371,7 @@
         let firebaseLibraryGlobal = {};
         const scale = 20;
 
-        // APLICACIÓN AUTOMÁTICA DE ESTILOS TRANSPARENTES Y NEÓN AL IFRAME
+        // APLICACIÓN AUTOMÁTICA DE ESTILOS TRANSPARENTES, CENTRADOS Y NEÓN AL IFRAME
         iframe.addEventListener('load', () => {
             try {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -379,6 +379,81 @@
 
                 const styleNode = iframeDoc.createElement('style');
                 styleNode.innerHTML = `
+                    /* REDUCCIÓN DEL ANCHO DE "DATOS DEL TROQUEL" A 28% */
+                    .seccion-datos-troquel, 
+                    [class*="troquel"], 
+                    .col-datos-troquel,
+                    .col-troquel,
+                    div:has(> h3:contains("Datos del Troquel")),
+                    div:has(> h4:contains("Datos del Troquel")) {
+                        max-width: 28% !important;
+                        flex-basis: 28% !important;
+                        width: 28% !important;
+                        padding: 6px 10px !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    /* AMPLIACIÓN DE "CAPTURA DE PRODUCCIÓN" A 72% */
+                    .seccion-captura-produccion, 
+                    [class*="captura"], 
+                    .col-captura-produccion,
+                    .col-captura,
+                    div:has(> h3:contains("Captura de Producción")),
+                    div:has(> h4:contains("Captura de Producción")) {
+                        max-width: 72% !important;
+                        flex-basis: 72% !important;
+                        width: 72% !important;
+                        padding: 6px 10px !important;
+                        box-sizing: border-box !important;
+                    }
+
+                    /* ALINEACIÓN PERFECTA EN GRID/FLEX DE LOS 4 CUADROS DE MÉTRICAS */
+                    .grid-metricas, .contenedor-metricas, [class*="metricas"], [class*="inputs-grid"],
+                    .flex:has(input[id*="Producida"]), .grid:has(input[id*="Producida"]) {
+                        display: grid !important;
+                        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+                        gap: 12px !important;
+                        align-items: end !important;
+                        justify-items: center !important;
+                        width: 100% !important;
+                    }
+
+                    /* ESTILOS DE ETIQUETAS/TITULOS DE QTY PRODUCIDA Y OTRAS MÉTRICAS */
+                    label[for*="Producida"], label[for*="producida"], .label-producida,
+                    label[for*="Scrap"], label[for*="scrap"], .label-scrap,
+                    label[for*="Retrabajo"], label[for*="retrabajo"], label[for*="reetrabajo"], .label-retrabajo,
+                    label[for*="TM"], label[for*="tm"], .label-tm,
+                    th:contains("QTY"), th:contains("PRODUCIDA") {
+                        display: block !important;
+                        text-align: center !important;
+                        white-space: nowrap !important;
+                        width: 100% !important;
+                        font-size: 11px !important;
+                        font-weight: 700 !important;
+                        letter-spacing: 0.02em !important;
+                        margin-bottom: 4px !important;
+                    }
+
+                    /* ALINEACIÓN Y DISEÑO DE LOS CUADROS DE ENTRADA / INPUTS */
+                    input[id*="Producida"], input[name*="producida"], input[id*="producida"], input[id*="Cantidad"],
+                    input[id*="Scrap"], input[name*="scrap"], input[id*="scrap"],
+                    input[id*="Retrabajo"], input[name*="retrabajo"], input[id*="reetrabajo"],
+                    input[id*="TM"], input[name*="tm"], input[id*="tm"],
+                    .card-producida, .card-scrap, .card-retrabajo, .card-tm,
+                    [data-type="producida"], [data-type="scrap"], [data-type="retrabajo"], [data-type="tm"] {
+                        text-align: center !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        margin: 0 auto !important;
+                        width: 100% !important;
+                        height: 42px !important;
+                        border-radius: 6px !important;
+                        font-size: 15px !important;
+                        font-weight: bold !important;
+                        box-sizing: border-box !important;
+                    }
+
                     /* 1. QTY PRODUCIDA: Verde Neón */
                     input[id*="Producida"], input[name*="producida"], 
                     input[id*="producida"], input[id*="Cantidad"],
@@ -407,6 +482,15 @@
                         color: #fde047 !important;
                     }
 
+                    /* 4. TM: Azul / Cian Neón */
+                    input[id*="TM"], input[name*="tm"], 
+                    input[id*="tm"], .card-tm, [data-type="tm"] {
+                        background-color: rgba(6, 182, 212, 0.15) !important;
+                        border: 2px solid #06b6d4 !important;
+                        box-shadow: 0 0 12px rgba(6, 182, 212, 0.5) !important;
+                        color: #22d3ee !important;
+                    }
+
                     /* Efecto Focus/Activo */
                     input[id*="Producida"]:focus, input[id*="producida"]:focus {
                         box-shadow: 0 0 18px rgba(34, 197, 94, 0.8) !important;
@@ -416,6 +500,9 @@
                     }
                     input[id*="Retrabajo"]:focus, input[id*="reetrabajo"]:focus {
                         box-shadow: 0 0 18px rgba(234, 179, 8, 0.8) !important;
+                    }
+                    input[id*="TM"]:focus, input[id*="tm"]:focus {
+                        box-shadow: 0 0 18px rgba(6, 182, 212, 0.8) !important;
                     }
                 `;
                 iframeDoc.head.appendChild(styleNode);
