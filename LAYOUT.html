@@ -150,6 +150,19 @@
             height: 800px !important;
             min-height: 800px;
         }
+
+        /* Estilo para elementos reportados */
+        .falla-activa {
+            background-color: #ef4444 !important;
+            border-color: #dc2626 !important;
+            color: #ffffff !important;
+        }
+
+        .falla-activa-row {
+            background-color: rgba(239, 68, 68, 0.3) !important;
+            color: #7f1d1d !important;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="text-gray-200 min-h-screen font-sans">
@@ -260,6 +273,108 @@
         </div>
     </div>
 
+    <!-- VENTANA FLOTANTE: REPORTAR / ACTIVAR LÍNEA -->
+    <div id="reportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div class="bg-[#18181c] border-2 border-amber-500 rounded-xl p-5 shadow-2xl text-gray-200 w-full max-w-md relative animate-in fade-in zoom-in duration-200">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-4">
+                <h3 class="text-base font-bold text-amber-400">Estado de Línea: <span id="reportLineTitle"></span></h3>
+                <button onclick="closeReportModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            
+            <!-- ENCABEZADOS TAB BOTONES -->
+            <div class="flex border-b border-gray-700 mb-4">
+                <button type="button" id="tabReportarBtn" onclick="switchReportTab('reportar')" class="w-1/2 py-2 text-center font-bold text-sm border-b-2 border-red-500 text-red-400 bg-red-950/20">Reportar</button>
+                <button type="button" id="tabActivarBtn" onclick="switchReportTab('activar')" class="w-1/2 py-2 text-center font-bold text-sm text-gray-400 border-b-2 border-transparent">Activar</button>
+            </div>
+
+            <!-- CUERPO DE REPORTAR -->
+            <form id="formReportar" onsubmit="enviarReporte(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Fecha y Hora</label>
+                    <input type="text" id="reportDateTime" readonly class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-gray-300 font-mono">
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Tipo de Falla</label>
+                    <select id="reportTipo" class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white">
+                        <option value="Falta de Material">Falta de Material</option>
+                        <option value="Falla Mecanica">Falla Mecanica</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Motivo de Falla</label>
+                    <input type="text" id="reportMotivo" required placeholder="Especifique el motivo..." class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Responsable</label>
+                    <input type="text" id="reportResponsable" required placeholder="Nombre del responsable..." class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Comentarios</label>
+                    <textarea id="reportComentarios" rows="2" placeholder="Comentarios adicionales..." class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded shadow transition-colors">Enviar</button>
+            </form>
+
+            <!-- CUERPO DE ACTIVAR -->
+            <form id="formActivar" onsubmit="enviarActivacion(event)" class="hidden space-y-3 text-xs">
+                <div>
+                    <label class="block text-gray-400 font-semibold mb-1">Fecha y Hora</label>
+                    <input type="text" id="activeDateTime" readonly class="w-full bg-gray-800 border border-gray-700 rounded p-2 text-gray-300 font-mono">
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Estado</label>
+                    <select id="activeEstado" class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white">
+                        <option value="Reparado">Reparado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-300 font-semibold mb-1">Comentarios</label>
+                    <textarea id="activeComentarios" rows="3" placeholder="Comentarios sobre la solución/activación..." class="w-full bg-[#121215] border border-gray-600 rounded p-2 text-white"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition-colors">Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VENTANA FLOTANTE: HISTORIAL DE INCIDENCIAS DE CONTROL OPERATIVO -->
+    <div id="incidentsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+        <!-- MODIFICADO: Se amplió el ancho de la ventana usando max-w-6xl -->
+        <div class="bg-[#18181c] border-2 border-red-500/80 rounded-xl p-5 shadow-2xl text-gray-200 w-full max-w-6xl relative animate-in fade-in zoom-in duration-200 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+                <h3 class="text-lg font-bold text-red-400 flex items-center gap-2">
+                    🚨 Historial de Incidencias Operativas
+                </h3>
+                <button onclick="closeIncidentsModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+            </div>
+            
+            <div class="overflow-y-auto flex-1 rounded border border-gray-700 bg-[#111113] p-2">
+                <table class="min-w-full divide-y divide-gray-800 text-left text-xs">
+                    <thead class="bg-gray-800/80 text-gray-300 font-bold sticky top-0 backdrop-blur-md">
+                        <tr>
+                            <th class="px-3 py-2">Fecha/Hora Reporte</th>
+                            <th class="px-3 py-2">Estación/Troquel</th>
+                            <th class="px-3 py-2">Tipo de Falla</th>
+                            <th class="px-3 py-2">Motivo / Detalle</th>
+                            <th class="px-3 py-2">Responsable</th>
+                            <th class="px-3 py-2 text-center">Estado Actual</th>
+                            <!-- NUEVA COLUMNA DE TIEMPO TRANSCRURRIDO -->
+                            <th class="px-3 py-2 text-center">Tiempo Transcurrido (Reparación)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidentsHistoryList" class="divide-y divide-gray-800 text-gray-300">
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500 italic">No hay registros de incidencias reportadas.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-gray-700 mt-3">
+                <button onclick="closeIncidentsModal()" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-1.5 px-4 rounded text-xs">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ENCABEZADO -->
     <header class="bg-[#18181b]/95 backdrop-blur-md text-white p-4 shadow-xl border-b border-gray-800 grid grid-cols-1 md:grid-cols-3 items-center gap-4 relative z-50">
         <div class="flex items-center justify-center md:justify-start space-x-2 relative">
@@ -331,12 +446,18 @@
             </div>
         </div>
 
-        <!-- LISTADO DE CONTROL OPERATIVO -->
-        <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full">
-            <h2 class="text-xl font-semibold mb-4">3. Listado de Control Operativo</h2>
+        <!-- LISTADO DE CONTROL OPERATIVO CON HISTORIAL EN ENCABEZADO -->
+        <div class="seccion-cristalina p-6 rounded-lg shadow-lg w-full relative">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">3. Listado de Control Operativo</h2>
+                <!-- BOTÓN VENTANA FLOTANTE HISTORIAL DE INCIDENCIAS -->
+                <button type="button" onclick="openIncidentsModal()" class="bg-red-600/90 hover:bg-red-600 text-white font-semibold py-1.5 px-3 rounded-md border border-red-400/50 text-xs flex items-center gap-1.5 shadow-md transition-all">
+                    <span>📋 Historial de Incidencias</span>
+                </button>
+            </div>
             <div class="overflow-x-auto rounded border border-gray-400/60 bg-white/40 shadow-sm backdrop-blur-md">
                 <table class="min-w-full divide-y divide-gray-300 text-left text-xs">
-                    <thead class="bg-gray-200/70 text-gray-800 font-bold">
+                    <thead class="bg-gray-200/80 text-gray-800 font-bold">
                         <tr>
                             <th class="px-3 py-3">Área / Línea</th>
                             <th class="px-3 py-3">Modelo</th>
@@ -369,6 +490,8 @@
         let database = {};
         let objectCount = 0;
         let firebaseLibraryGlobal = {};
+        let selectedReportId = null;
+        let historialIncidenciasGlobal = [];
         const scale = 20;
 
         // APLICACIÓN AUTOMÁTICA DE ESTILOS TRANSPARENTES, CENTRADOS Y NEÓN AL IFRAME
@@ -379,135 +502,37 @@
 
                 const styleNode = iframeDoc.createElement('style');
                 styleNode.innerHTML = `
-                    /* REDUCCIÓN DEL ANCHO DE "DATOS DEL TROQUEL" A 28% */
-                    .seccion-datos-troquel, 
-                    [class*="troquel"], 
-                    .col-datos-troquel,
-                    .col-troquel,
-                    div:has(> h3:contains("Datos del Troquel")),
-                    div:has(> h4:contains("Datos del Troquel")) {
-                        max-width: 28% !important;
-                        flex-basis: 28% !important;
-                        width: 28% !important;
-                        padding: 6px 10px !important;
-                        box-sizing: border-box !important;
+                    .seccion-datos-troquel, [class*="troquel"], .col-datos-troquel, .col-troquel {
+                        max-width: 28% !important; flex-basis: 28% !important; width: 28% !important; padding: 6px 10px !important; box-sizing: border-box !important;
                     }
-
-                    /* AMPLIACIÓN DE "CAPTURA DE PRODUCCIÓN" A 72% */
-                    .seccion-captura-produccion, 
-                    [class*="captura"], 
-                    .col-captura-produccion,
-                    .col-captura,
-                    div:has(> h3:contains("Captura de Producción")),
-                    div:has(> h4:contains("Captura de Producción")) {
-                        max-width: 72% !important;
-                        flex-basis: 72% !important;
-                        width: 72% !important;
-                        padding: 6px 10px !important;
-                        box-sizing: border-box !important;
+                    .seccion-captura-produccion, [class*="captura"], .col-captura-produccion, .col-captura {
+                        max-width: 72% !important; flex-basis: 72% !important; width: 72% !important; padding: 6px 10px !important; box-sizing: border-box !important;
                     }
-
-                    /* ALINEACIÓN PERFECTA EN GRID/FLEX DE LOS 4 CUADROS DE MÉTRICAS */
-                    .grid-metricas, .contenedor-metricas, [class*="metricas"], [class*="inputs-grid"],
-                    .flex:has(input[id*="Producida"]), .grid:has(input[id*="Producida"]) {
-                        display: grid !important;
-                        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-                        gap: 12px !important;
-                        align-items: end !important;
-                        justify-items: center !important;
-                        width: 100% !important;
+                    .grid-metricas, .contenedor-metricas, [class*="metricas"], [class*="inputs-grid"] {
+                        display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 12px !important; align-items: end !important; justify-items: center !important; width: 100% !important;
                     }
-
-                    /* ESTILOS DE ETIQUETAS/TITULOS DE QTY PRODUCIDA Y OTRAS MÉTRICAS */
-                    label[for*="Producida"], label[for*="producida"], .label-producida,
-                    label[for*="Scrap"], label[for*="scrap"], .label-scrap,
-                    label[for*="Retrabajo"], label[for*="retrabajo"], label[for*="reetrabajo"], .label-retrabajo,
-                    label[for*="TM"], label[for*="tm"], .label-tm,
-                    th:contains("QTY"), th:contains("PRODUCIDA") {
-                        display: block !important;
-                        text-align: center !important;
-                        white-space: nowrap !important;
-                        width: 100% !important;
-                        font-size: 11px !important;
-                        font-weight: 700 !important;
-                        letter-spacing: 0.02em !important;
-                        margin-bottom: 4px !important;
+                    label[for*="Producida"], label[for*="producida"], .label-producida, label[for*="Scrap"], label[for*="scrap"], .label-scrap, label[for*="Retrabajo"], label[for*="retrabajo"], label[for*="reetrabajo"], .label-retrabajo, label[for*="TM"], label[for*="tm"], .label-tm {
+                        display: block !important; text-align: center !important; white-space: nowrap !important; width: 100% !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: 0.02em !important; margin-bottom: 4px !important;
                     }
-
-                    /* ALINEACIÓN Y DISEÑO DE LOS CUADROS DE ENTRADA / INPUTS */
-                    input[id*="Producida"], input[name*="producida"], input[id*="producida"], input[id*="Cantidad"],
-                    input[id*="Scrap"], input[name*="scrap"], input[id*="scrap"],
-                    input[id*="Retrabajo"], input[name*="retrabajo"], input[id*="reetrabajo"],
-                    input[id*="TM"], input[name*="tm"], input[id*="tm"],
-                    .card-producida, .card-scrap, .card-retrabajo, .card-tm,
-                    [data-type="producida"], [data-type="scrap"], [data-type="retrabajo"], [data-type="tm"] {
-                        text-align: center !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        margin: 0 auto !important;
-                        width: 100% !important;
-                        height: 42px !important;
-                        border-radius: 6px !important;
-                        font-size: 15px !important;
-                        font-weight: bold !important;
-                        box-sizing: border-box !important;
+                    input[id*="Producida"], input[name*="producida"], input[id*="producida"], input[id*="Cantidad"], input[id*="Scrap"], input[name*="scrap"], input[id*="scrap"], input[id*="Retrabajo"], input[name*="retrabajo"], input[id*="reetrabajo"], input[id*="TM"], input[name*="tm"], input[id*="tm"] {
+                        text-align: center !important; display: flex !important; align-items: center !important; justify-content: center !important; margin: 0 auto !important; width: 100% !important; height: 42px !important; border-radius: 6px !important; font-size: 15px !important; font-weight: bold !important; box-sizing: border-box !important;
                     }
-
-                    /* 1. QTY PRODUCIDA: Verde Neón */
-                    input[id*="Producida"], input[name*="producida"], 
-                    input[id*="producida"], input[id*="Cantidad"],
-                    .card-producida, [data-type="producida"] {
-                        background-color: rgba(34, 197, 94, 0.15) !important;
-                        border: 2px solid #22c55e !important;
-                        box-shadow: 0 0 12px rgba(34, 197, 94, 0.5) !important;
-                        color: #4ade80 !important;
+                    input[id*="Producida"], input[name*="producida"], input[id*="producida"], input[id*="Cantidad"] {
+                        background-color: rgba(34, 197, 94, 0.15) !important; border: 2px solid #22c55e !important; box-shadow: 0 0 12px rgba(34, 197, 94, 0.5) !important; color: #4ade80 !important;
                     }
-
-                    /* 2. QTY SCRAP: Rojo Neón */
-                    input[id*="Scrap"], input[name*="scrap"], 
-                    input[id*="scrap"], .card-scrap, [data-type="scrap"] {
-                        background-color: rgba(239, 68, 68, 0.15) !important;
-                        border: 2px solid #ef4444 !important;
-                        box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
-                        color: #f87171 !important;
+                    input[id*="Scrap"], input[name*="scrap"], input[id*="scrap"] {
+                        background-color: rgba(239, 68, 68, 0.15) !important; border: 2px solid #ef4444 !important; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important; color: #f87171 !important;
                     }
-
-                    /* 3. QTY RETRABAJO: Amarillo Neón */
-                    input[id*="Retrabajo"], input[name*="retrabajo"], 
-                    input[id*="reetrabajo"], .card-retrabajo, [data-type="retrabajo"] {
-                        background-color: rgba(234, 179, 8, 0.15) !important;
-                        border: 2px solid #eab308 !important;
-                        box-shadow: 0 0 12px rgba(234, 179, 8, 0.5) !important;
-                        color: #fde047 !important;
+                    input[id*="Retrabajo"], input[name*="retrabajo"], input[id*="reetrabajo"] {
+                        background-color: rgba(234, 179, 8, 0.15) !important; border: 2px solid #eab308 !important; box-shadow: 0 0 12px rgba(234, 179, 8, 0.5) !important; color: #fde047 !important;
                     }
-
-                    /* 4. TM: Azul / Cian Neón */
-                    input[id*="TM"], input[name*="tm"], 
-                    input[id*="tm"], .card-tm, [data-type="tm"] {
-                        background-color: rgba(6, 182, 212, 0.15) !important;
-                        border: 2px solid #06b6d4 !important;
-                        box-shadow: 0 0 12px rgba(6, 182, 212, 0.5) !important;
-                        color: #22d3ee !important;
-                    }
-
-                    /* Efecto Focus/Activo */
-                    input[id*="Producida"]:focus, input[id*="producida"]:focus {
-                        box-shadow: 0 0 18px rgba(34, 197, 94, 0.8) !important;
-                    }
-                    input[id*="Scrap"]:focus, input[id*="scrap"]:focus {
-                        box-shadow: 0 0 18px rgba(239, 68, 68, 0.8) !important;
-                    }
-                    input[id*="Retrabajo"]:focus, input[id*="reetrabajo"]:focus {
-                        box-shadow: 0 0 18px rgba(234, 179, 8, 0.8) !important;
-                    }
-                    input[id*="TM"]:focus, input[id*="tm"]:focus {
-                        box-shadow: 0 0 18px rgba(6, 182, 212, 0.8) !important;
+                    input[id*="TM"], input[name*="tm"], input[id*="tm"] {
+                        background-color: rgba(6, 182, 212, 0.15) !important; border: 2px solid #06b6d4 !important; box-shadow: 0 0 12px rgba(6, 182, 212, 0.5) !important; color: #22d3ee !important;
                     }
                 `;
                 iframeDoc.head.appendChild(styleNode);
             } catch (err) {
-                console.log("Integración de estilos de visualización completada.");
+                console.log("Integración de estilos completada.");
             }
         });
 
@@ -519,11 +544,8 @@
         };
 
         function toggleIframeEvents(active) {
-            if (active) {
-                iframe.classList.remove('pointer-events-none');
-            } else {
-                iframe.classList.add('pointer-events-none');
-            }
+            if (active) iframe.classList.remove('pointer-events-none');
+            else iframe.classList.add('pointer-events-none');
         }
 
         function openProductionLogModal() {
@@ -533,14 +555,7 @@
 
         function openInlineEditor(id) {
             toggleIframeEvents(true);
-
-            const payloadData = { 
-                ...database[id],
-                cantidadProducida: 0,
-                cantidadScrap: 0,
-                reetrabajo: 0
-            };
-
+            const payloadData = { ...database[id], cantidadProducida: 0, cantidadScrap: 0, reetrabajo: 0 };
             iframe.contentWindow.postMessage({ type: 'OPEN_INLINE_EDITOR', payload: { id, data: payloadData } }, '*');
         }
 
@@ -587,6 +602,221 @@
             }
         });
 
+        /* --- LÓGICA VENTANA FLOTANTE HISTORIAL DE INCIDENCIAS --- */
+        function openIncidentsModal() {
+            renderizarHistorialIncidencias();
+            document.getElementById('incidentsModal').classList.remove('hidden');
+        }
+
+        function closeIncidentsModal() {
+            document.getElementById('incidentsModal').classList.add('hidden');
+        }
+
+        // FUNCIÓN AUXILIAR PARA CALCULAR LA DIFERENCIA DE TIEMPO
+        function calcularTiempoTranscurrido(fechaInicioStr, fechaFinStr) {
+            if (!fechaInicioStr || !fechaFinStr) return "En atención...";
+            
+            const inicio = new Date(fechaInicioStr);
+            const fin = new Date(fechaFinStr);
+            
+            if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+                return "Tiempo no disponible";
+            }
+            
+            let diffMs = fin - inicio;
+            if (diffMs < 0) diffMs = 0;
+            
+            const totalMinutos = Math.floor(diffMs / (1000 * 60));
+            const dias = Math.floor(totalMinutos / (60 * 24));
+            const horas = Math.floor((totalMinutos % (60 * 24)) / 60);
+            const minutos = totalMinutos % 60;
+            
+            let resultado = "";
+            if (dias > 0) resultado += `${dias}d `;
+            if (horas > 0 || dias > 0) resultado += `${horas}h `;
+            resultado += `${minutos}m`;
+            
+            return resultado;
+        }
+
+        function renderizarHistorialIncidencias() {
+            const container = document.getElementById('incidentsHistoryList');
+            container.innerHTML = '';
+
+            let hayRegistros = false;
+
+            // Recorrer estado actual de las estaciones
+            Object.keys(database).forEach(id => {
+                const item = database[id];
+                if (item.incidencias && item.incidencias.length > 0) {
+                    hayRegistros = true;
+                    item.incidencias.forEach(inc => {
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-gray-800/40 transition-colors";
+                        
+                        let tiempoTexto = "En atención...";
+                        if (inc.fechaHoraActivacion) {
+                            tiempoTexto = calcularTiempoTranscurrido(inc.fechaHoraISO || inc.fechaHora, inc.fechaHoraActivacionISO || inc.fechaHoraActivacion);
+                        }
+
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 font-mono text-[11px] text-gray-400">
+                                ${inc.fechaHora}
+                                ${inc.fechaHoraActivacion ? `<br><span class="text-emerald-400 text-[10px]">Act: ${inc.fechaHoraActivacion}</span>` : ''}
+                            </td>
+                            <td class="px-3 py-2 font-bold text-amber-400">${item.troquel} (${item.area})</td>
+                            <td class="px-3 py-2 text-red-400 font-semibold">${inc.tipo}</td>
+                            <td class="px-3 py-2 text-gray-300">${inc.motivo} ${inc.comentarios ? `<br><span class="text-gray-500 italic">"${inc.comentarios}"</span>` : ''}</td>
+                            <td class="px-3 py-2 text-gray-300">${inc.responsable}</td>
+                            <td class="px-3 py-2 text-center">
+                                ${!inc.resuelto 
+                                    ? `<span class="bg-red-900/60 text-red-300 border border-red-500 px-2 py-0.5 rounded text-[10px] font-bold">⚠️ ACTIVA</span>` 
+                                    : `<span class="bg-emerald-900/60 text-emerald-300 border border-emerald-500 px-2 py-0.5 rounded text-[10px] font-bold">✅ RESUELTA</span>`}
+                            </td>
+                            <td class="px-3 py-2 text-center font-mono font-bold ${inc.resuelto ? 'text-cyan-400' : 'text-amber-400'}">
+                                ⏱️ ${tiempoTexto}
+                            </td>
+                        `;
+                        container.appendChild(tr);
+                    });
+                }
+            });
+
+            if (!hayRegistros) {
+                container.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-gray-500 italic">No existen incidencias o fallas registradas.</td></tr>';
+            }
+        }
+
+        /* --- LÓGICA PARA POPUP DE REPORTAR / ACTIVAR LÍNEA --- */
+        function openReportModal(id) {
+            selectedReportId = id;
+            const data = database[id];
+            document.getElementById('reportLineTitle').innerText = `${data.area} - ${data.troquel}`;
+            
+            const now = new Date();
+            const nowStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            document.getElementById('reportDateTime').value = nowStr;
+            document.getElementById('activeDateTime').value = nowStr;
+
+            switchReportTab('reportar');
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            selectedReportId = null;
+        }
+
+        function switchReportTab(tab) {
+            const repBtn = document.getElementById('tabReportarBtn');
+            const actBtn = document.getElementById('tabActivarBtn');
+            const formRep = document.getElementById('formReportar');
+            const formAct = document.getElementById('formActivar');
+
+            if (tab === 'reportar') {
+                repBtn.className = "w-1/2 py-2 text-center font-bold text-sm border-b-2 border-red-500 text-red-400 bg-red-950/20";
+                actBtn.className = "w-1/2 py-2 text-center font-bold text-sm text-gray-400 border-b-2 border-transparent";
+                formRep.classList.remove('hidden');
+                formAct.classList.add('hidden');
+            } else {
+                actBtn.className = "w-1/2 py-2 text-center font-bold text-sm border-b-2 border-emerald-500 text-emerald-400 bg-emerald-950/20";
+                repBtn.className = "w-1/2 py-2 text-center font-bold text-sm text-gray-400 border-b-2 border-transparent";
+                formAct.classList.remove('hidden');
+                formRep.classList.add('hidden');
+            }
+        }
+
+        function setFallaState(id, isFalla) {
+            database[id].isFalla = isFalla;
+            const row = document.getElementById(`row-${id}`);
+            if(row) {
+                if (isFalla) row.classList.add('falla-activa-row');
+                else row.classList.remove('falla-activa-row');
+            }
+            updateVisualObject(id);
+        }
+
+        function enviarReporte(e) {
+            e.preventDefault();
+            if (!selectedReportId || !database[selectedReportId]) return;
+
+            const data = database[selectedReportId];
+            const fechaHora = document.getElementById('reportDateTime').value;
+            const tipo = document.getElementById('reportTipo').value;
+            const motivo = document.getElementById('reportMotivo').value;
+            const responsable = document.getElementById('reportResponsable').value;
+            const comentarios = document.getElementById('reportComentarios').value;
+            const fechaHoraISO = new Date().toISOString();
+
+            // Guardar reporte dentro de la estructura de la estación
+            if (!database[selectedReportId].incidencias) {
+                database[selectedReportId].incidencias = [];
+            }
+            database[selectedReportId].incidencias.unshift({
+                fechaHora, 
+                fechaHoraISO,
+                tipo, 
+                motivo, 
+                responsable, 
+                comentarios, 
+                resuelto: false
+            });
+
+            setFallaState(selectedReportId, true);
+
+            const mensaje = `🚨 *REPORTE DE FALLA EN LÍNEA*\n\n` +
+                `📌 *Área/Línea:* ${data.area}\n` +
+                `🏷️ *Troquel/Estación:* ${data.troquel}\n` +
+                `📅 *Fecha y Hora:* ${fechaHora}\n` +
+                `⚠️ *Tipo de Falla:* ${tipo}\n` +
+                `🔍 *Motivo:* ${motivo}\n` +
+                `👤 *Responsable:* ${responsable}\n` +
+                `💬 *Comentarios:* ${comentarios || 'Sin comentarios'}`;
+
+            const url = `https://wa.me/+526644530070?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+
+            closeReportModal();
+        }
+
+        function enviarActivacion(e) {
+            e.preventDefault();
+            if (!selectedReportId || !database[selectedReportId]) return;
+
+            const data = database[selectedReportId];
+            const fechaHoraActivacion = document.getElementById('activeDateTime').value;
+            const fechaHoraActivacionISO = new Date().toISOString();
+            const estado = document.getElementById('activeEstado').value;
+            const comentarios = document.getElementById('activeComentarios').value;
+
+            setFallaState(selectedReportId, false);
+
+            let tiempoCalculadoText = "";
+            // Buscar la incidencia activa más reciente para resolverla
+            if (data.incidencias && data.incidencias.length > 0) {
+                const incActiva = data.incidencias.find(i => !i.resuelto);
+                if (incActiva) {
+                    incActiva.resuelto = true;
+                    incActiva.fechaHoraActivacion = fechaHoraActivacion;
+                    incActiva.fechaHoraActivacionISO = fechaHoraActivacionISO;
+                    tiempoCalculadoText = calcularTiempoTranscurrido(incActiva.fechaHoraISO || incActiva.fechaHora, fechaHoraActivacionISO);
+                }
+            }
+
+            const mensaje = `✅ *LÍNEA ACTIVADA / REPARADA*\n\n` +
+                `📌 *Área/Línea:* ${data.area}\n` +
+                `🏷️ *Troquel/Estación:* ${data.troquel}\n` +
+                `📅 *Fecha y Hora Activación:* ${fechaHoraActivacion}\n` +
+                `⏱️ *Tiempo de Reparación:* ${tiempoCalculadoText || 'N/A'}\n` +
+                `🛠️ *Estado:* ${estado}\n` +
+                `💬 *Comentarios:* ${comentarios || 'Sin comentarios'}`;
+
+            const url = `https://wa.me/+526644530070?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+
+            closeReportModal();
+        }
+
         function renderizarBaseDeDatosCompleta() {
             canvas.querySelectorAll('.draggable-item').forEach(el => el.remove());
             inventoryList.innerHTML = '';
@@ -618,6 +848,11 @@
 
                 const row = document.createElement('tr');
                 row.id = `row-${id}`;
+                row.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON') openReportModal(id);
+                };
+                row.className = "cursor-pointer hover:bg-black/10 transition-colors";
+                if(obj.isFalla) row.classList.add('falla-activa-row');
                 row.innerHTML = generateRowHTML(id, obj.type, obj.area, obj.modelo, obj.subEnsamble, obj.medida, obj.troquel, obj.libras, obj.estandar, obj.opsReq, obj.length, obj.width);
                 inventoryList.appendChild(row);
             });
@@ -809,7 +1044,7 @@
                 database[objectCount] = { 
                     type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width, 
                     cantidadProducida: 0, cantidadScrap: 0, reetrabajo: 0, comentarios: '', 
-                    x: 20, y: 20 
+                    x: 20, y: 20, isFalla: false, incidencias: [] 
                 };
 
                 const visualObj = document.createElement('div');
@@ -831,6 +1066,11 @@
 
                 const row = document.createElement('tr');
                 row.id = `row-${objectCount}`;
+                const curId = objectCount;
+                row.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON') openReportModal(curId);
+                };
+                row.className = "cursor-pointer hover:bg-black/10 transition-colors";
                 row.innerHTML = generateRowHTML(objectCount, type, area, modelo, subEnsamble, medida, troquel, libras, estandar, opsReq, length, width);
                 inventoryList.appendChild(row);
                 form.reset();
@@ -850,10 +1090,15 @@
             
             const currentConfig = colorMap[obj.type];
             const resizers = elm.querySelectorAll('.resizer-h, .resizer-v, .resizer-both');
-            resizers.forEach(r => r.style.color = `#${currentConfig.borderHex}`);
-
-            elm.className = `absolute cursor-move select-none p-1.5 ${currentConfig.bg} ${currentConfig.text} ${currentConfig.customBorder} ${currentConfig.extraClass} rounded draggable-item flex items-center justify-center text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 hover:z-20`;
             
+            if (obj.isFalla) {
+                elm.className = `absolute cursor-move select-none p-1.5 bg-red-600 text-white font-extrabold border-2 border-red-800 rounded draggable-item flex items-center justify-center text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-red-500/50 hover:z-20 falla-activa`;
+                resizers.forEach(r => r.style.color = `#ffffff`);
+            } else {
+                resizers.forEach(r => r.style.color = `#${currentConfig.borderHex}`);
+                elm.className = `absolute cursor-move select-none p-1.5 ${currentConfig.bg} ${currentConfig.text} ${currentConfig.customBorder} ${currentConfig.extraClass} rounded draggable-item flex items-center justify-center text-center transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-cyan-500/20 hover:z-20`;
+            }
+
             const label = elm.querySelector('.label-container');
             if(label) label.innerText = obj.troquel;
         }
@@ -870,8 +1115,8 @@
                 <td class="px-3 py-3 text-center text-gray-700">${opsReq}</td>
                 <td class="px-3 py-3 text-center text-gray-600">${width}x${length}</td>
                 <td class="px-3 py-3 text-center space-x-2">
-                    <button type="button" onclick="startEdit(${id})" class="text-blue-600 font-medium hover:underline">Editar</button>
-                    <button type="button" onclick="removeObject(${id})" class="text-red-600 font-medium hover:underline">Borrar</button>
+                    <button type="button" onclick="startEdit(${id}); event.stopPropagation();" class="text-blue-600 font-medium hover:underline">Editar</button>
+                    <button type="button" onclick="removeObject(${id}); event.stopPropagation();" class="text-red-600 font-medium hover:underline">Borrar</button>
                 </td>
             `;
         }
