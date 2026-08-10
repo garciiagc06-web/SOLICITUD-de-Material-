@@ -55,6 +55,8 @@
         .draggable-item { 
             cursor: move; 
             touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .pasillo-dinamico::after {
@@ -588,21 +590,18 @@
 
     <!-- LÓGICA PRINCIPAL DE LA APLICACIÓN -->
     <script>
-          // Reemplaza estos valores con los de tu consola de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSy...",
-  authDomain: "layout-71405.firebaseapp.com",
-  projectId: "layout-71405",
-  storageBucket: "layout-71405.appspot.com",
-  messagingSenderId: "123456789...",
-  appId: "1:123456789:web:abcdef..."
-};
+        const firebaseConfig = {
+          apiKey: "AIzaSy...",
+          authDomain: "layout-71405.firebaseapp.com",
+          projectId: "layout-71405",
+          storageBucket: "layout-71405.appspot.com",
+          messagingSenderId: "123456789...",
+          appId: "1:123456789:web:abcdef..."
+        };
 
-
-// Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore(app);
-
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
 
         const form = document.getElementById('areaForm');
         const almacenForm = document.getElementById('almacenAreaForm');
@@ -615,10 +614,11 @@ const db = firebase.firestore(app);
         let objectCount = 0;
         let firebaseLibraryGlobal = {};
         let selectedReportId = null;
-        let isEditingIncidents = false; // Control de modo edición masiva
+        let isEditingIncidents = false;
+        let currentDocumentId = null; // CONTROL DE DOCUMENTO SELECCIONADO/CARGADO
         const scale = 20;
 
-        // --- CONEXIÓN FIREBASE FIRESTORE ---
+        // --- CONEXIÓN FIREBASE FIRESTORE UNIFICADA ---
         function escucharLayoutsFirebase() {
             db.collection("industrial_layouts").onSnapshot((snapshot) => {
                 firebaseLibraryGlobal = {};
@@ -632,39 +632,55 @@ const db = firebase.firestore(app);
         }
 
         window.guardarLayoutEnFirebaseCloud = function(trabajo, modelo) {
-            const docId = `${trabajo}_${modelo}`.replace(/\s+/g, '_');
+            // Generar nuevo ID estandarizado
+            const newDocId = `${trabajo}_${modelo}`.trim().toLowerCase().replace(/\s+/g, '_');
+
             const dataToSave = {
-                trabajo: trabajo,
-                modelo: modelo,
+                trabajo: trabajo.trim(),
+                modelo: modelo.trim(),
                 database: database,
                 objectCount: objectCount,
-                fechaGuardado: firebase.firestore.FieldValue.serverTimestamp()
+                fechaActualizacion: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            db.collection("layouts").doc(docId).set(dataToSave)
-                .then(() => {
-                    alert(`✅ Proyecto "${trabajo} - ${modelo}" guardado correctamente en Firebase.`);
-                    closeSaveModal();
-                })
-                .catch((error) => {
-                    console.error("Error al guardar en Firebase:", error);
-                    alert("⚠️ Error al guardar en Firebase: " + error.message);
-                });
+            const procederGuardado = (targetDocId) => {
+                db.collection("industrial_layouts").doc(targetDocId).set(dataToSave, { merge: true })
+                    .then(() => {
+                        currentDocumentId = targetDocId;
+                        alert(`✅ Proyecto "${trabajo} - ${modelo}" guardado correctamente.`);
+                        if (typeof closeSaveModal === 'function') closeSaveModal();
+                    })
+                    .catch((error) => {
+                        console.error("Error al guardar en Firebase:", error);
+                        alert("⚠️ Error al guardar en Firebase: " + error.message);
+                    });
+            };
+
+            // Si cambió el nombre/modelo respecto al cargado, borrar documento anterior si aplica o crear nuevo
+            if (currentDocumentId && currentDocumentId !== newDocId) {
+                if (confirm(`El nombre del proyecto ha cambiado. ¿Deseas renombrar el archivo actual "${trabajo} - ${modelo}"?`)) {
+                    db.collection("industrial_layouts").doc(currentDocumentId).delete().then(() => {
+                        procederGuardado(newDocId);
+                    });
+                    return;
+                }
+            }
+
+            procederGuardado(newDocId);
         };
 
-        window.borrarLayoutDeFirebaseCloud = function(storageKey) {
-            db.collection("layouts").doc(storageKey).delete()
+        window.borrarLayoutDeFirebaseCloud = function(docId) {
+            db.collection("industrial_layouts").doc(docId).delete()
                 .then(() => {
-                    alert("🗑️ El proyecto fue borrado con éxito de Firebase.");
+                    alert("✅ Proyecto eliminado de la nube correctamente.");
                     iniciarNuevoProyecto();
                 })
                 .catch((error) => {
-                    console.error("Error al borrar en Firebase:", error);
-                    alert("⚠️ Error al borrar el documento: " + error.message);
+                    console.error("Error al eliminar de Firebase:", error);
+                    alert("⚠️ Error al borrar: " + error.message);
                 });
         };
 
-        // Escuchar la base de datos de Firebase al cargar
         document.addEventListener('DOMContentLoaded', () => {
             escucharLayoutsFirebase();
         });
@@ -1193,6 +1209,7 @@ const db = firebase.firestore(app);
 
             database = {};
             objectCount = 0;
+            currentDocumentId = null; // LIMPIA ID DOCUMENTO
             document.getElementById('currentTrabajoName').value = "";
             document.getElementById('currentModeloName').value = "";
             resetFormState();
@@ -1207,6 +1224,7 @@ const db = firebase.firestore(app);
                 return;
             }
 
+            currentDocumentId = null; // DESVINCULA EL ID PARA GUARDAR COMO COPIA
             document.getElementById('currentTrabajoName').value = "";
             document.getElementById('currentModeloName').value = "";
             document.getElementById('filterTrabajo').value = "";
@@ -1274,6 +1292,7 @@ const db = firebase.firestore(app);
                 return;
             }
 
+            currentDocumentId = key; // FIJA EL DOCUMENTO ACTIVO
             database = item.database || {};
             objectCount = item.objectCount || Object.keys(database).reduce((max, id) => Math.max(max, parseInt(id)), 0);
             
@@ -1491,191 +1510,223 @@ const db = firebase.firestore(app);
             `;
         }
 
-        function makeElementDraggableAndResizable(elmnt, id) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            
-            const rh = elmnt.querySelector('.resizer-h');
-            const rv = elmnt.querySelector('.resizer-v');
-            const rb = elmnt.querySelector('.resizer-both');
+        function startEdit(id) {
+            const obj = database[id];
+            if(!obj) return;
 
-            const initResize = (e, resizeH, resizeV) => {
-                e.preventDefault();
-                e.stopPropagation();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                
-                const startWidth = elmnt.offsetWidth;
-                const startHeight = elmnt.offsetHeight;
+            document.getElementById('editingId').value = id;
+            document.getElementById('zoneType').value = obj.type;
+            document.getElementById('procArea').value = obj.area === '-' ? '' : obj.area;
+            document.getElementById('procModelo').value = obj.modelo === '-' ? '' : obj.modelo;
+            document.getElementById('procSubEnsamble').value = obj.subEnsamble === '-' ? '' : obj.subEnsamble;
+            document.getElementById('procMedida').value = obj.medida === '-' ? '' : obj.medida;
+            document.getElementById('procTroquel').value = obj.troquel;
+            document.getElementById('procLibras').value = obj.libras === '-' ? '' : obj.libras;
+            document.getElementById('procEstandar').value = obj.estandar === '-' ? '' : obj.estandar;
+            document.getElementById('procOpsReq').value = obj.opsReq;
+            document.getElementById('zoneLength').value = obj.length;
+            document.getElementById('zoneWidth').value = obj.width;
 
-                const doResize = (moveEvent) => {
-                    pos1 = moveEvent.clientX - pos3;
-                    pos2 = moveEvent.clientY - pos4;
-                    
-                    if (resizeH) {
-                        let newWidth = Math.max(scale, startWidth + pos1);
-                        elmnt.style.width = newWidth + 'px';
-                    }
-                    if (resizeV) {
-                        let newHeight = Math.max(scale, startHeight + pos2);
-                        elmnt.style.height = newHeight + 'px';
-                    }
-                };
+            document.getElementById('formTitle').innerText = "1. Editar Estación";
+            document.getElementById('submitBtn').innerText = "Guardar Cambios";
+            document.getElementById('cancelBtn').classList.remove('hidden');
 
-                const stopResize = () => {
-                    document.removeEventListener('mousemove', doResize);
-                    document.removeEventListener('mouseup', stopResize);
-                    
-                    let finalWidthBlocks = Math.max(1, Math.round(elmnt.offsetWidth / scale));
-                    let finalLengthBlocks = Math.max(1, Math.round(elmnt.offsetHeight / scale));
-                    
-                    database[id].width = finalWidthBlocks;
-                    database[id].length = finalLengthBlocks;
-                    
-                    updateVisualObject(id);
-
-                    const editingId = document.getElementById('editingId').value;
-                    if (editingId == id) {
-                        document.getElementById('zoneWidth').value = finalWidthBlocks;
-                        document.getElementById('zoneLength').value = finalLengthBlocks;
-                    }
-
-                    const editingAlmacenId = document.getElementById('editingAlmacenId').value;
-                    if (editingAlmacenId == id) {
-                        document.getElementById('almacenZoneWidth').value = finalWidthBlocks;
-                        document.getElementById('almacenZoneLength').value = finalLengthBlocks;
-                    }
-                    
-                    document.getElementById(`row-${id}`).innerHTML = generateRowHTML(
-                        id, database[id].type, database[id].area, database[id].modelo, database[id].subEnsamble,
-                        database[id].medida, database[id].troquel, database[id].libras, database[id].estandar, database[id].opsReq,
-                        finalLengthBlocks, finalWidthBlocks
-                    );
-                };
-
-                document.addEventListener('mousemove', doResize);
-                document.addEventListener('mouseup', stopResize);
-            };
-
-            rh.addEventListener('mousedown', (e) => initResize(e, true, false));
-            rv.addEventListener('mousedown', (e) => initResize(e, false, true));
-            rb.addEventListener('mousedown', (e) => initResize(e, true, true));
-
-            elmnt.onpointerdown = (e) => {
-                if (e.target.classList.contains('resizer-h') || 
-                    e.target.classList.contains('resizer-v') || 
-                    e.target.classList.contains('resizer-both')) return;
-                
-                e.preventDefault();
-                elmnt.setPointerCapture(e.pointerId);
-
-                const rect = elmnt.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
-                
-                const offsetX = e.clientX - rect.left;
-                const offsetY = e.clientY - rect.top;
-
-                const onPointerMove = (moveEvent) => {
-                    let newX = moveEvent.clientX - canvasRect.left - offsetX;
-                    let newY = moveEvent.clientY - canvasRect.top - offsetY;
-
-                    newX = Math.round(newX / scale) * scale;
-                    newY = Math.round(newY / scale) * scale;
-
-                    const maxX = canvas.clientWidth - elmnt.offsetWidth;
-                    const maxY = canvas.clientHeight - elmnt.offsetHeight;
-
-                    newX = Math.max(0, Math.min(newX, maxX));
-                    newY = Math.max(0, Math.min(newY, maxY));
-
-                    elmnt.style.left = `${newX}px`;
-                    elmnt.style.top = `${newY}px`;
-                };
-
-                const onPointerUp = (upEvent) => {
-                    elmnt.releasePointerCapture(upEvent.pointerId);
-                    elmnt.onpointermove = null;
-                    elmnt.onpointerup = null;
-
-                    database[id].x = parseInt(elmnt.style.left) || 0;
-                    database[id].y = parseInt(elmnt.style.top) || 0;
-                };
-
-                elmnt.onpointermove = onPointerMove;
-                elmnt.onpointerup = onPointerUp;
-            };
+            openStationModal();
         }
 
-        window.startEdit = function(id) {
-            const data = database[id];
-            document.getElementById('editingId').value = id;
-            document.getElementById('zoneType').value = data.type;
-            document.getElementById('procArea').value = data.area;
-            document.getElementById('procModelo').value = data.modelo;
-            document.getElementById('procSubEnsamble').value = data.subEnsamble;
-            document.getElementById('procMedida').value = data.medida;
-            document.getElementById('procTroquel').value = data.troquel;
-            document.getElementById('procLibras').value = data.libras || '';
-            document.getElementById('procEstandar').value = data.estandar;
-            document.getElementById('procOpsReq').value = data.opsReq;
-            document.getElementById('zoneLength').value = data.length;
-            document.getElementById('zoneWidth').value = data.width;
+        function resetFormState() {
+            document.getElementById('editingId').value = "";
+            form.reset();
+            document.getElementById('formTitle').innerText = "1. Control de Estación";
+            document.getElementById('submitBtn').innerText = "Agregar";
+            document.getElementById('cancelBtn').classList.add('hidden');
+        }
 
-            document.getElementById('submitBtn').innerText = "Guardar";
-            document.getElementById('cancelBtn').classList.remove('hidden');
-            openStationModal();
-        };
+        function resetAlmacenFormState() {
+            document.getElementById('editingAlmacenId').value = "";
+            almacenForm.reset();
+            document.getElementById('almacenFormTitle').innerText = "1. Almacen / Logística";
+            document.getElementById('almacenSubmitBtn').innerText = "Agregar";
+            document.getElementById('almacenCancelBtn').classList.add('hidden');
+        }
 
-        window.removeObject = function(id) {
-            if (!confirm("¿Estás seguro de que deseas eliminar este elemento?")) return;
-            const visualObj = document.getElementById(`visual-${id}`);
-            if (visualObj) visualObj.remove();
-            
-            const row = document.getElementById(`row-${id}`);
-            if (row) row.remove();
+        function removeObject(id) {
+            if(!confirm("¿Seguro que deseas eliminar esta estación?")) return;
             
             delete database[id];
+            
+            const elm = document.getElementById(`visual-${id}`);
+            if(elm) elm.remove();
+            
+            const row = document.getElementById(`row-${id}`);
+            if(row) row.remove();
             
             if (Object.keys(database).length === 0) {
                 inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
             }
+
             actualizarTablaCapturas();
-        };
-
-        function resetFormState() {
-            document.getElementById('editingId').value = '';
-            document.getElementById('submitBtn').innerText = "Agregar";
-            document.getElementById('cancelBtn').classList.add('hidden');
-            form.reset();
         }
 
-        function resetAlmacenFormState() {
-            document.getElementById('editingAlmacenId').value = '';
-            document.getElementById('almacenSubmitBtn').innerText = "Agregar";
-            document.getElementById('almacenCancelBtn').classList.add('hidden');
-            almacenForm.reset();
+        /* --- LÓGICA DE MOVILIDAD Y REDIMENSIONAMIENTO OPTIMIZADA (POINTER EVENTS) --- */
+        function makeElementDraggableAndResizable(elm, id) {
+            let isDragging = false;
+            let isResizing = false;
+            let resizeMode = null; // 'h', 'v', 'both'
+
+            let startX = 0, startY = 0;
+            let initialX = 0, initialY = 0;
+            let initialW = 0, initialH = 0;
+
+            elm.addEventListener('pointerdown', (e) => {
+                // Verificar si se interactúa con los redimensionadores
+                const targetClass = e.target.classList;
+                if (targetClass.contains('resizer-h')) {
+                    isResizing = true;
+                    resizeMode = 'h';
+                } else if (targetClass.contains('resizer-v')) {
+                    isResizing = true;
+                    resizeMode = 'v';
+                } else if (targetClass.contains('resizer-both')) {
+                    isResizing = true;
+                    resizeMode = 'both';
+                } else {
+                    isDragging = true;
+                }
+
+                // Capturar el puntero para movimiento continuo fuera de límites
+                elm.setPointerCapture(e.pointerId);
+
+                // Posición inicial del puntero
+                startX = e.clientX;
+                startY = e.clientY;
+
+                // Posición e historia actual del elemento
+                initialX = elm.offsetLeft;
+                initialY = elm.offsetTop;
+                initialW = elm.offsetWidth;
+                initialH = elm.offsetHeight;
+
+                // Desactivar animaciones CSS temporales para fluidez pura
+                elm.style.transition = 'none';
+                elm.style.zIndex = '100';
+
+                e.stopPropagation();
+            });
+
+            elm.addEventListener('pointermove', (e) => {
+                if (!isDragging && !isResizing) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+
+                if (isDragging) {
+                    let newX = initialX + deltaX;
+                    let newY = initialY + deltaY;
+
+                    // Ajuste suave a la cuadrícula (10px - Media Celda)
+                    newX = Math.round(newX / 10) * 10;
+                    newY = Math.round(newY / 10) * 10;
+
+                    // Límites dentro del canvas
+                    const maxX = canvas.clientWidth - elm.offsetWidth;
+                    const maxY = canvas.clientHeight - elm.offsetHeight;
+
+                    newX = Math.max(0, Math.min(newX, maxX));
+                    newY = Math.max(0, Math.min(newY, maxY));
+
+                    elm.style.left = `${newX}px`;
+                    elm.style.top = `${newY}px`;
+
+                    if (database[id]) {
+                        database[id].x = newX;
+                        database[id].y = newY;
+                    }
+                } else if (isResizing) {
+                    let newW = initialW;
+                    let newH = initialH;
+
+                    if (resizeMode === 'h' || resizeMode === 'both') {
+                        newW = Math.max(scale, initialW + deltaX);
+                        newW = Math.round(newW / scale) * scale;
+                    }
+                    if (resizeMode === 'v' || resizeMode === 'both') {
+                        newH = Math.max(scale, initialH + deltaY);
+                        newH = Math.round(newH / scale) * scale;
+                    }
+
+                    elm.style.width = `${newW}px`;
+                    elm.style.height = `${newH}px`;
+
+                    if (database[id]) {
+                        database[id].width = Math.round(newW / scale);
+                        database[id].length = Math.round(newH / scale);
+
+                        // Actualizar columna en la tabla de control
+                        const row = document.getElementById(`row-${id}`);
+                        if (row) {
+                            const dimCell = row.cells[8];
+                            if (dimCell) dimCell.innerText = `${database[id].width}x${database[id].length}`;
+                        }
+                    }
+                }
+            });
+
+            const stopDragOrResize = (e) => {
+                if (!isDragging && !isResizing) return;
+
+                if (elm.hasPointerCapture(e.pointerId)) {
+                    elm.releasePointerCapture(e.pointerId);
+                }
+
+                isDragging = false;
+                isResizing = false;
+                resizeMode = null;
+
+                // Restaurar transición CSS original
+                elm.style.transition = '';
+                elm.style.zIndex = '';
+
+                actualizarTablaCapturas();
+            };
+
+            elm.addEventListener('pointerup', stopDragOrResize);
+            elm.addEventListener('pointercancel', stopDragOrResize);
         }
 
-        function exportarLayoutAExcel() {
+        /* --- EXPORTAR LAYOUT A EXCEL --- */
+        async function exportarLayoutAExcel() {
             if (Object.keys(database).length === 0) {
-                alert("No hay datos en el layout para exportar.");
+                alert("No hay estaciones o datos para exportar.");
                 return;
             }
 
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Control Operativo');
 
+            // Encabezados
             worksheet.columns = [
                 { header: 'Área / Línea', key: 'area', width: 20 },
-                { header: 'Modelo', key: 'modelo', width: 15 },
-                { header: 'Sub-Ensamble / Perfil', key: 'subEnsamble', width: 20 },
+                { header: 'Modelo', key: 'modelo', width: 18 },
+                { header: 'Sub-Ensamble / Perfil', key: 'subEnsamble', width: 22 },
                 { header: 'Medida', key: 'medida', width: 15 },
                 { header: 'Troquel / Estación', key: 'troquel', width: 20 },
                 { header: 'Libras', key: 'libras', width: 12 },
                 { header: 'Estd. x Hr', key: 'estandar', width: 12 },
-                { header: 'Op. Req.', key: 'opsReq', width: 12 },
-                { header: 'Dimensiones (W x L)', key: 'dimensiones', width: 18 }
+                { header: 'Op. Requerido', key: 'opsReq', width: 15 },
+                { header: 'Dimensiones (WxL)', key: 'dimensiones', width: 18 },
+                { header: 'Estado Falla', key: 'estado', width: 15 }
             ];
 
+            // Estilos de Encabezado
+            worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '0F172A' }
+            };
+
+            // Llenar Datos
             Object.keys(database).forEach(id => {
                 const item = database[id];
                 worksheet.addRow({
@@ -1687,21 +1738,15 @@ const db = firebase.firestore(app);
                     libras: item.libras,
                     estandar: item.estandar,
                     opsReq: item.opsReq,
-                    dimensiones: `${item.width}x${item.length}`
+                    dimensiones: `${item.width}x${item.length}`,
+                    estado: item.isFalla ? 'FALLA / REPORTE' : 'NORMAL'
                 });
             });
 
-            worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
-            worksheet.getRow(1).fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: '008BA3' }
-            };
-
-            workbook.xlsx.writeBuffer().then(buffer => {
-                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                saveAs(blob, `Layout_Control_Operativo_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            });
+            // Descargar Archivo Excel
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `Layout_Industrial_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
     </script>
 </body>
