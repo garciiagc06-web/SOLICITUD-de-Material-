@@ -9,6 +9,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
+    <!-- SDKs de Firebase (Compat para integración directa en Script de navegador) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
         body {
             background: linear-gradient(135deg, #09090b 0%, #18181b 50%, #050507 100%);
@@ -503,6 +507,10 @@
             <p class="text-sm text-gray-400">Control de producción y balanceo de operadores por estación</p>
         </div>
         <div class="flex justify-center md:justify-end items-center space-x-2">
+            <!-- BOTÓN DIRECCIONABLE A PANEL DE CONTROL.html -->
+            <a href="PANEL DE CONTROL.html" class="bg-cyan-600/40 hover:bg-cyan-500 text-white font-semibold py-2 px-3 rounded-md border border-cyan-400/40 backdrop-blur-sm shadow-md text-xs flex items-center space-x-1 transition-all">
+                <span>🎛️ INICIO</span>
+            </a>
             <button onclick="exportarLayoutAExcel()" class="bg-emerald-500/30 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-md border border-emerald-400/30 backdrop-blur-sm shadow-md text-xs flex items-center space-x-1">
                 <span>📊 Exportar</span>
             </button>
@@ -580,6 +588,22 @@
 
     <!-- LÓGICA PRINCIPAL DE LA APLICACIÓN -->
     <script>
+          // Reemplaza estos valores con los de tu consola de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "layout-71405.firebaseapp.com",
+  projectId: "layout-71405",
+  storageBucket: "layout-71405.appspot.com",
+  messagingSenderId: "123456789...",
+  appId: "1:123456789:web:abcdef..."
+};
+
+
+// Inicializar Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(app);
+
+
         const form = document.getElementById('areaForm');
         const almacenForm = document.getElementById('almacenAreaForm');
         const canvas = document.getElementById('plantCanvas');
@@ -593,6 +617,57 @@
         let selectedReportId = null;
         let isEditingIncidents = false; // Control de modo edición masiva
         const scale = 20;
+
+        // --- CONEXIÓN FIREBASE FIRESTORE ---
+        function escucharLayoutsFirebase() {
+            db.collection("layouts").onSnapshot((snapshot) => {
+                firebaseLibraryGlobal = {};
+                snapshot.forEach((doc) => {
+                    firebaseLibraryGlobal[doc.id] = doc.data();
+                });
+                actualizarDesplegablesFiltro();
+            }, (error) => {
+                console.error("Error al escuchar cambios en Firebase:", error);
+            });
+        }
+
+        window.guardarLayoutEnFirebaseCloud = function(trabajo, modelo) {
+            const docId = `${trabajo}_${modelo}`.replace(/\s+/g, '_');
+            const dataToSave = {
+                trabajo: trabajo,
+                modelo: modelo,
+                database: database,
+                objectCount: objectCount,
+                fechaGuardado: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            db.collection("layouts").doc(docId).set(dataToSave)
+                .then(() => {
+                    alert(`✅ Proyecto "${trabajo} - ${modelo}" guardado correctamente en Firebase.`);
+                    closeSaveModal();
+                })
+                .catch((error) => {
+                    console.error("Error al guardar en Firebase:", error);
+                    alert("⚠️ Error al guardar en Firebase: " + error.message);
+                });
+        };
+
+        window.borrarLayoutDeFirebaseCloud = function(storageKey) {
+            db.collection("layouts").doc(storageKey).delete()
+                .then(() => {
+                    alert("🗑️ El proyecto fue borrado con éxito de Firebase.");
+                    iniciarNuevoProyecto();
+                })
+                .catch((error) => {
+                    console.error("Error al borrar en Firebase:", error);
+                    alert("⚠️ Error al borrar el documento: " + error.message);
+                });
+        };
+
+        // Escuchar la base de datos de Firebase al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            escucharLayoutsFirebase();
+        });
 
         // APLICACIÓN AUTOMÁTICA DE ESTILOS TRANSPARENTES, CENTRADOS Y NEÓN AL IFRAME
         iframe.addEventListener('load', () => {
@@ -820,7 +895,6 @@
                         }
                     });
 
-                    // Actualizar el estado de falla de la estación
                     const hayActivas = item.incidencias.some(i => !i.resuelto);
                     setFallaState(id, hayActivas);
                 }
@@ -1551,207 +1625,84 @@
             openStationModal();
         };
 
-        window.resetFormState = function() {
-            form.reset();
-            document.getElementById('editingId').value = "";
-            document.getElementById('submitBtn').innerText = "Agregar";
-            document.getElementById('cancelBtn').classList.add('hidden');
-        };
-
-        window.resetAlmacenFormState = function() {
-            almacenForm.reset();
-            document.getElementById('editingAlmacenId').value = "";
-            document.getElementById('almacenSubmitBtn').innerText = "Agregar";
-            document.getElementById('almacenCancelBtn').classList.add('hidden');
-        };
-
         window.removeObject = function(id) {
-            const visual = document.getElementById(`visual-${id}`);
-            if(visual) visual.remove();
+            if (!confirm("¿Estás seguro de que deseas eliminar este elemento?")) return;
+            const visualObj = document.getElementById(`visual-${id}`);
+            if (visualObj) visualObj.remove();
+            
             const row = document.getElementById(`row-${id}`);
-            if(row) row.remove();
+            if (row) row.remove();
+            
             delete database[id];
-            if (Object.keys(database).length === 0 && emptyRow) emptyRow.style.display = 'table-row';
+            
+            if (Object.keys(database).length === 0) {
+                inventoryList.innerHTML = '<tr id="emptyRow"><td colspan="10" class="px-4 py-8 text-center text-gray-500 italic">Sin estaciones registradas.</td></tr>';
+            }
             actualizarTablaCapturas();
         };
 
-        async function exportarLayoutAExcel() {
+        function resetFormState() {
+            document.getElementById('editingId').value = '';
+            document.getElementById('submitBtn').innerText = "Agregar";
+            document.getElementById('cancelBtn').classList.add('hidden');
+            form.reset();
+        }
+
+        function resetAlmacenFormState() {
+            document.getElementById('editingAlmacenId').value = '';
+            document.getElementById('almacenSubmitBtn').innerText = "Agregar";
+            document.getElementById('almacenCancelBtn').classList.add('hidden');
+            almacenForm.reset();
+        }
+
+        function exportarLayoutAExcel() {
             if (Object.keys(database).length === 0) {
-                alert("Por favor agrega al menos una estación antes de exportar.");
+                alert("No hay datos en el layout para exportar.");
                 return;
             }
 
             const workbook = new ExcelJS.Workbook();
-            const sheet1 = workbook.addWorksheet('Plano de Planta');
-            for(let r=1; r<35; r++) {
-                const row = sheet1.getRow(r);
-                row.height = 22;
-                for(let c=1; c<45; c++) {
-                    const cell = row.getCell(c);
-                    cell.fill = { type: 'pattern', pattern:'solid', fgColor:{argb:'000000'} };
-                    cell.border = {
-                        top: {style:'thin', color: {argb:'008BA3'}}, left: {style:'thin', color: {argb:'008BA3'}},
-                        bottom: {style:'thin', color: {argb:'008BA3'}}, right: {style:'thin', color: {argb:'008BA3'}}
-                    };
-                }
-            }
-            
+            const worksheet = workbook.addWorksheet('Control Operativo');
+
+            worksheet.columns = [
+                { header: 'Área / Línea', key: 'area', width: 20 },
+                { header: 'Modelo', key: 'modelo', width: 15 },
+                { header: 'Sub-Ensamble / Perfil', key: 'subEnsamble', width: 20 },
+                { header: 'Medida', key: 'medida', width: 15 },
+                { header: 'Troquel / Estación', key: 'troquel', width: 20 },
+                { header: 'Libras', key: 'libras', width: 12 },
+                { header: 'Estd. x Hr', key: 'estandar', width: 12 },
+                { header: 'Op. Req.', key: 'opsReq', width: 12 },
+                { header: 'Dimensiones (W x L)', key: 'dimensiones', width: 18 }
+            ];
+
             Object.keys(database).forEach(id => {
-                const obj = database[id];
-                const startCol = Math.max(1, Math.floor(obj.x / scale) + 2);
-                const startRow = Math.max(1, Math.floor(obj.y / scale) + 2);
-                const endCol = startCol + obj.width - 1;
-                const endRow = startRow + obj.length - 1;
-
-                for (let r = startRow; r <= endRow; r++) {
-                    for (let c = startCol; c <= endCol; c++) {
-                        const cell = sheet1.getRow(r).getCell(c);
-                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: colorMap[obj.type].hex } };
-                        
-                        cell.border = {
-                            top: {style: r === startRow ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
-                            bottom: {style: r === endRow ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
-                            left: {style: c === startCol ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}},
-                            right: {style: c === endCol ? 'medium' : 'thin', color: {argb: colorMap[obj.type].borderHex}}
-                        };
-                    }
-                }
-                
-                sheet1.mergeCells(startRow, startCol, endRow, endCol);
-                const mainCell = sheet1.getRow(startRow).getCell(startCol);
-                mainCell.value = obj.troquel;
-                mainCell.font = { name: 'Arial', size: 11, bold: true, color: { argb: colorMap[obj.type].borderHex } };
-                mainCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-            });
-
-            const sheet2 = workbook.addWorksheet('Listado de Control');
-            const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '1E1E24' } };
-            const headerFont = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
-            
-            const headers = ["Área / Línea", "Modelo", "Sub-Ensamble / Perfil", "Medida", "Troquel / Estación", "Libras", "Estándar x Hora", "Op. Requerido", "QTY Producida", "QTY Scrap", "Reetrabajo", "Comentarios", "Última Fecha", "Última Hora"];
-            
-            sheet2.getRow(2).height = 25;
-            headers.forEach((h, index) => {
-                const cell = sheet2.getRow(2).getCell(index + 2);
-                cell.value = h;
-                cell.fill = headerFill;
-                cell.font = headerFont;
-                cell.alignment = { horizontal: 'center', vertical: 'center' };
-            });
-
-            let currentExcelRow = 3;
-            Object.keys(database).forEach(id => {
-                const obj = database[id];
-                const row = sheet2.getRow(currentExcelRow);
-                row.height = 20;
-
-                const values = [
-                    obj.area,
-                    obj.modelo,
-                    obj.subEnsamble,
-                    obj.medida,
-                    obj.troquel,
-                    obj.libras || '-',
-                    obj.estandar,
-                    parseInt(obj.opsReq),
-                    obj.cantidadProducida || 0,
-                    obj.cantidadScrap || 0,
-                    obj.reetrabajo || 0,
-                    obj.comentarios || '-',
-                    obj.ultimaFecha || '-',
-                    obj.ultimaHora || '-'
-                ];
-
-                values.forEach((val, index) => {
-                    const cell = row.getCell(index + 2);
-                    cell.value = val;
-                    cell.font = { name: 'Arial', size: 10 };
-                    cell.border = { bottom: { style: 'thin', color: { argb: 'E5E7EB' } } };
-                    
-                    if (index >= 5 && index <= 10) {
-                        cell.alignment = { horizontal: 'center', vertical: 'center' };
-                    } else {
-                        cell.alignment = { horizontal: 'left', vertical: 'center' };
-                    }
+                const item = database[id];
+                worksheet.addRow({
+                    area: item.area,
+                    modelo: item.modelo,
+                    subEnsamble: item.subEnsamble,
+                    medida: item.medida,
+                    troquel: item.troquel,
+                    libras: item.libras,
+                    estandar: item.estandar,
+                    opsReq: item.opsReq,
+                    dimensiones: `${item.width}x${item.length}`
                 });
-                currentExcelRow++;
             });
 
-            sheet2.columns.forEach((col, idx) => {
-                if(idx > 0) col.width = 20;
-            });
-            sheet2.getColumn(1).width = 4;
+            worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+            worksheet.getRow(1).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: '008BA3' }
+            };
 
-            const buffer = await workbook.xlsx.writeBuffer();
-            const trabajo = document.getElementById('currentTrabajoName').value.trim();
-            const modelo = document.getElementById('currentModeloName').value.trim();
-            const fileName = (trabajo && modelo) ? `${trabajo}_${modelo}.xlsx` : "Layout_Control_Produccion.xlsx";
-            saveAs(new Blob([buffer]), fileName);
+            workbook.xlsx.writeBuffer().then(buffer => {
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                saveAs(blob, `Layout_Control_Operativo_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            });
         }
-    </script>
-
-    <!-- INTEGRACIÓN CON FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAL1kcdZGBAaETrq2H6Qbwq-QEwzPIJ5WY",
-            authDomain: "layout-71405.firebaseapp.com",
-            projectId: "layout-71405",
-            storageBucket: "layout-71405.firebasestorage.app",
-            messagingSenderId: "1522652969",
-            appId: "1:1522652969:web:d22d37beeb8a3149acc938",
-            measurementId: "G-KXCZGWX98N"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const layoutsCollection = collection(db, "industrial_layouts");
-
-        onSnapshot(layoutsCollection, (snapshot) => {
-            firebaseLibraryGlobal = {};
-            snapshot.forEach((doc) => {
-                firebaseLibraryGlobal[doc.id] = doc.data();
-            });
-            actualizarDesplegablesFiltro();
-        }, (error) => {
-            console.error("Error escuchando Firebase:", error);
-        });
-
-        window.guardarLayoutEnFirebaseCloud = async function(trabajo, modelo) {
-            const storageKey = `${trabajo}___${modelo}`;
-            try {
-                await setDoc(doc(db, "industrial_layouts", storageKey), {
-                    trabajo: trabajo,
-                    modelo: modelo,
-                    database: database,
-                    objectCount: objectCount,
-                    fechaActualizacion: new Date().toISOString()
-                });
-
-                closeSaveModal();
-                alert(`✅ ¡Trabajo "${trabajo}" (Modelo: ${modelo}) guardado exitosamente en la nube!`);
-                
-                document.getElementById('filterTrabajo').value = trabajo;
-                onTrabajoChange(trabajo);
-                document.getElementById('filterModelo').value = storageKey;
-            } catch (error) {
-                console.error("Error al guardar en Firebase:", error);
-                alert("❌ Error al guardar en Firebase: " + error.message);
-            }
-        };
-
-        window.borrarLayoutDeFirebaseCloud = async function(storageKey) {
-            try {
-                await deleteDoc(doc(db, "industrial_layouts", storageKey));
-                iniciarNuevoProyecto();
-                alert("🗑️ El modelo ha sido eliminado de la nube.");
-            } catch (error) {
-                console.error("Error borrando en Firebase:", error);
-                alert("❌ Error al borrar de Firebase: " + error.message);
-            }
-        };
     </script>
 </body>
 </html>
