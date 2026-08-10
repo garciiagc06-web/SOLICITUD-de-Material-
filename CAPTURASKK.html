@@ -110,10 +110,21 @@
 
     <!-- MODAL DE LISTADO HISTÓRICO Y GENERAL DE CAPTURAS -->
     <div id="logModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-5 shadow-2xl w-full max-w-6xl relative max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center border-b border-gray-700 pb-3 mb-4">
+        <div class="bg-[#18181c] border-2 border-cyan-500 rounded-xl p-5 shadow-2xl w-full max-w-7xl relative max-h-[90vh] flex flex-col">
+            
+            <!-- ENCABEZADO CON BOTONES MODIFICAR Y ELIMINAR -->
+            <div class="flex flex-wrap justify-between items-center border-b border-gray-700 pb-3 mb-4 gap-2">
                 <h3 class="text-lg font-bold text-cyan-400">📊 Control y Registro de Capturas de Producción</h3>
-                <button onclick="cerrarLogModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+                
+                <div class="flex items-center gap-2">
+                    <button id="btnModificarTbl" onclick="toggleModoEdicion()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-1.5 px-3 rounded text-xs border border-amber-400/30 flex items-center gap-1 transition-colors">
+                        ✏️ <span>MODIFICAR</span>
+                    </button>
+                    <button onclick="eliminarTodosLosRegistros()" class="bg-red-600 hover:bg-red-500 text-white font-semibold py-1.5 px-3 rounded text-xs border border-red-400/30 flex items-center gap-1 transition-colors">
+                        🗑️ <span>ELIMINAR TODOS</span>
+                    </button>
+                    <button onclick="cerrarLogModal()" class="text-gray-400 hover:text-white text-xl font-semibold px-2">&times;</button>
+                </div>
             </div>
 
             <div class="overflow-y-auto flex-1 border border-gray-700 rounded-lg">
@@ -131,11 +142,12 @@
                             <th class="p-2.5 text-center">QTY RETRABAJO</th>
                             <th class="p-2.5 text-center">TM</th>
                             <th class="p-2.5">COMENTARIOS</th>
+                            <th id="thAcciones" class="p-2.5 text-center hidden">ACCIONES</th>
                         </tr>
                     </thead>
                     <tbody id="tablaHistorialBody" class="divide-y divide-gray-800 bg-[#121215]">
                         <tr>
-                            <td colspan="11" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
+                            <td colspan="12" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -150,7 +162,7 @@
     <!-- FIREBASE PARA CAPTURASKK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAL1kcdZGBAaETrq2H6Qbwq-QEwzPIJ5WY",
@@ -185,12 +197,41 @@
                 console.error("Error guardando captura en Firebase:", error);
             }
         };
+
+        window.actualizarEnFirebaseCaptura = async function(idDoc, datosActualizados) {
+            try {
+                const docRef = doc(db, "capturas_produccion", idDoc);
+                await updateDoc(docRef, datosActualizados);
+            } catch (error) {
+                console.error("Error al actualizar captura:", error);
+            }
+        };
+
+        window.eliminarEnFirebaseCaptura = async function(idDoc) {
+            try {
+                const docRef = doc(db, "capturas_produccion", idDoc);
+                await deleteDoc(docRef);
+            } catch (error) {
+                console.error("Error al eliminar captura:", error);
+            }
+        };
+
+        window.eliminarTodosEnFirebaseCaptura = async function() {
+            try {
+                const snapshot = await getDocs(capturasCollection);
+                const promesas = snapshot.docs.map(docSnapshot => deleteDoc(doc(db, "capturas_produccion", docSnapshot.id)));
+                await Promise.all(promesas);
+            } catch (error) {
+                console.error("Error al eliminar todos los registros:", error);
+            }
+        };
     </script>
 
     <script>
         window.historialCapturas = [];
         let currentDatabase = {};
         let librasUnitariasBase = 0;
+        let modoEdicionActivo = false;
 
         function obtenerRangoHoraActual() {
             const ahora = new Date();
@@ -253,13 +294,33 @@
 
         function abrirLogModal(database) {
             currentDatabase = database || {};
+            modoEdicionActivo = false;
+            actualizarEstadoBotonEdicion();
             renderizarTablaHistorial();
             document.getElementById('logModal').classList.remove('hidden');
         }
 
         function cerrarLogModal() {
             document.getElementById('logModal').classList.add('hidden');
+            modoEdicionActivo = false;
             window.parent.postMessage({ type: 'CLOSE_LOG_MODAL' }, '*');
+        }
+
+        function toggleModoEdicion() {
+            modoEdicionActivo = !modoEdicionActivo;
+            actualizarEstadoBotonEdicion();
+            renderizarTablaHistorial();
+        }
+
+        function actualizarEstadoBotonEdicion() {
+            const btn = document.getElementById('btnModificarTbl');
+            if (modoEdicionActivo) {
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-1.5 px-3 rounded text-xs border border-emerald-400/30 flex items-center gap-1 transition-colors";
+                btn.innerHTML = "✓ <span>FINALIZAR EDICIÓN</span>";
+            } else {
+                btn.className = "bg-amber-600 hover:bg-amber-500 text-white font-semibold py-1.5 px-3 rounded text-xs border border-amber-400/30 flex items-center gap-1 transition-colors";
+                btn.innerHTML = "✏️ <span>MODIFICAR</span>";
+            }
         }
 
         async function guardarDatosCaptura(e) {
@@ -292,7 +353,6 @@
                 timestamp: Date.now()
             };
 
-            // Guardar en Firestore directamente
             if (window.guardarEnFirebaseCaptura) {
                 await window.guardarEnFirebaseCaptura(nuevoRegistro);
             }
@@ -317,32 +377,99 @@
             cerrarInlineEditor();
         }
 
+        async function guardarCambiosFila(idDoc) {
+            const fecha = document.getElementById(`edit-fecha-${idDoc}`).value;
+            const hora = document.getElementById(`edit-hora-${idDoc}`).value;
+            const troquel = document.getElementById(`edit-troquel-${idDoc}`).value;
+            const subEnsamble = document.getElementById(`edit-sub-${idDoc}`).value;
+            const medida = document.getElementById(`edit-medida-${idDoc}`).value;
+            const libras = document.getElementById(`edit-libras-${idDoc}`).value;
+            const cantidad = parseInt(document.getElementById(`edit-cant-${idDoc}`).value) || 0;
+            const scrap = parseInt(document.getElementById(`edit-scrap-${idDoc}`).value) || 0;
+            const reetrabajo = parseInt(document.getElementById(`edit-ree-${idDoc}`).value) || 0;
+            const tm = parseInt(document.getElementById(`edit-tm-${idDoc}`).value) || 0;
+            const comentarios = document.getElementById(`edit-com-${idDoc}`).value;
+
+            const datosActualizados = {
+                fecha, hora, troquel, subEnsamble, medida, libras,
+                cantidad, scrap, reetrabajo, tm, comentarios
+            };
+
+            if (window.actualizarEnFirebaseCaptura) {
+                await window.actualizarEnFirebaseCaptura(idDoc, datosActualizados);
+            }
+        }
+
+        async function eliminarFilaIndividual(idDoc) {
+            if (confirm("¿Deseas eliminar este registro de captura?")) {
+                if (window.eliminarEnFirebaseCaptura) {
+                    await window.eliminarEnFirebaseCaptura(idDoc);
+                }
+            }
+        }
+
+        async function eliminarTodosLosRegistros() {
+            if (confirm("⚠️ ¿ESTÁS SEGURO? Se eliminarán TODOS los registros de capturas permanentemente.")) {
+                if (window.eliminarTodosEnFirebaseCaptura) {
+                    await window.eliminarTodosEnFirebaseCaptura();
+                }
+            }
+        }
+
         window.renderizarTablaHistorial = function() {
             const tbody = document.getElementById('tablaHistorialBody');
+            const thAcciones = document.getElementById('thAcciones');
             if(!tbody) return;
             tbody.innerHTML = '';
 
+            if (modoEdicionActivo) {
+                thAcciones.classList.remove('hidden');
+            } else {
+                thAcciones.classList.add('hidden');
+            }
+
             if (!window.historialCapturas || window.historialCapturas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${modoEdicionActivo ? '12' : '11'}" class="p-4 text-center text-gray-500 italic">No hay capturas registradas aún.</td></tr>`;
                 return;
             }
 
             window.historialCapturas.forEach((reg) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-800/50 transition-colors";
-                tr.innerHTML = `
-                    <td class="p-2.5 font-medium text-cyan-400">${reg.fecha || '-'}</td>
-                    <td class="p-2.5 font-medium text-amber-300">${reg.hora || '-'}</td>
-                    <td class="p-2.5 font-semibold text-gray-100">${reg.troquel || '-'}</td>
-                    <td class="p-2.5 text-gray-300">${reg.subEnsamble || '-'}</td>
-                    <td class="p-2.5 text-gray-300">${reg.medida || '-'}</td>
-                    <td class="p-2.5 text-center text-emerald-300 font-bold">${reg.libras || '-'}</td>
-                    <td class="p-2.5 text-center font-bold text-emerald-400">${reg.cantidad ?? 0}</td>
-                    <td class="p-2.5 text-center text-red-400">${reg.scrap ?? 0}</td>
-                    <td class="p-2.5 text-center text-yellow-400">${reg.reetrabajo ?? 0}</td>
-                    <td class="p-2.5 text-center text-red-400 font-bold">${reg.tm ?? 0}</td>
-                    <td class="p-2.5 text-gray-400 truncate max-w-xs">${reg.comentarios || '-'}</td>
-                `;
+
+                if (modoEdicionActivo) {
+                    tr.innerHTML = `
+                        <td class="p-1.5"><input type="date" id="edit-fecha-${reg.idDoc}" value="${reg.fecha || ''}" class="w-full bg-gray-900 border border-gray-700 text-cyan-400 p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="text" id="edit-hora-${reg.idDoc}" value="${reg.hora || ''}" class="w-full bg-gray-900 border border-gray-700 text-amber-300 p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="text" id="edit-troquel-${reg.idDoc}" value="${reg.troquel || ''}" class="w-full bg-gray-900 border border-gray-700 text-gray-100 p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="text" id="edit-sub-${reg.idDoc}" value="${reg.subEnsamble || ''}" class="w-full bg-gray-900 border border-gray-700 text-gray-300 p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="text" id="edit-medida-${reg.idDoc}" value="${reg.medida || ''}" class="w-full bg-gray-900 border border-gray-700 text-gray-300 p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="text" id="edit-libras-${reg.idDoc}" value="${reg.libras || ''}" class="w-20 bg-gray-900 border border-gray-700 text-emerald-300 text-center p-1 rounded text-xs font-bold"></td>
+                        <td class="p-1.5"><input type="number" id="edit-cant-${reg.idDoc}" value="${reg.cantidad ?? 0}" class="w-16 bg-gray-900 border border-gray-700 text-emerald-400 text-center p-1 rounded text-xs font-bold"></td>
+                        <td class="p-1.5"><input type="number" id="edit-scrap-${reg.idDoc}" value="${reg.scrap ?? 0}" class="w-16 bg-gray-900 border border-gray-700 text-red-400 text-center p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="number" id="edit-ree-${reg.idDoc}" value="${reg.reetrabajo ?? 0}" class="w-16 bg-gray-900 border border-gray-700 text-yellow-400 text-center p-1 rounded text-xs"></td>
+                        <td class="p-1.5"><input type="number" id="edit-tm-${reg.idDoc}" value="${reg.tm ?? 0}" class="w-16 bg-gray-900 border border-gray-700 text-red-400 text-center p-1 rounded text-xs font-bold"></td>
+                        <td class="p-1.5"><input type="text" id="edit-com-${reg.idDoc}" value="${reg.comentarios || ''}" class="w-full bg-gray-900 border border-gray-700 text-gray-300 p-1 rounded text-xs"></td>
+                        <td class="p-1.5 text-center whitespace-nowrap">
+                            <button onclick="guardarCambiosFila('${reg.idDoc}')" title="Guardar cambios" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-1 px-2 rounded text-xs mr-1">💾</button>
+                            <button onclick="eliminarFilaIndividual('${reg.idDoc}')" title="Eliminar fila" class="bg-red-600 hover:bg-red-500 text-white font-bold p-1 px-2 rounded text-xs">🗑️</button>
+                        </td>
+                    `;
+                } else {
+                    tr.innerHTML = `
+                        <td class="p-2.5 font-medium text-cyan-400">${reg.fecha || '-'}</td>
+                        <td class="p-2.5 font-medium text-amber-300">${reg.hora || '-'}</td>
+                        <td class="p-2.5 font-semibold text-gray-100">${reg.troquel || '-'}</td>
+                        <td class="p-2.5 text-gray-300">${reg.subEnsamble || '-'}</td>
+                        <td class="p-2.5 text-gray-300">${reg.medida || '-'}</td>
+                        <td class="p-2.5 text-center text-emerald-300 font-bold">${reg.libras || '-'}</td>
+                        <td class="p-2.5 text-center font-bold text-emerald-400">${reg.cantidad ?? 0}</td>
+                        <td class="p-2.5 text-center text-red-400">${reg.scrap ?? 0}</td>
+                        <td class="p-2.5 text-center text-yellow-400">${reg.reetrabajo ?? 0}</td>
+                        <td class="p-2.5 text-center text-red-400 font-bold">${reg.tm ?? 0}</td>
+                        <td class="p-2.5 text-gray-400 truncate max-w-xs">${reg.comentarios || '-'}</td>
+                    `;
+                }
                 tbody.appendChild(tr);
             });
         };

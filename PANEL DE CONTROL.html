@@ -6,14 +6,15 @@
     <title>Sistema ERP - Tablero Estático</title>
     <style>
         :root {
-            --bg-principal: #121212;
-            --bg-tarjeta: #1e1e1e;
+            /* Fondo Azul Marino Brillante con degradado */
+            --bg-principal: radial-gradient(circle at top, #002855 0%, #00122e 60%, #000814 100%);
+            --bg-tarjeta: rgba(10, 25, 47, 0.85);
             --texto-principal: #ffffff;
-            --texto-secundario: #aaaaaa;
+            --texto-secundario: #88a0c0;
             --color-almacen: #3498db;
             --color-produccion: #e67e22;
-            --color-planeacion: #2ecc71;
-            --borde: #333333;
+            --color-plantas: #2ecc71;
+            --borde: #1e3a5f;
         }
 
         * {
@@ -24,9 +25,11 @@
         }
 
         body {
-            background-color: var(--bg-principal);
+            background: var(--bg-principal);
+            background-attachment: fixed;
             color: var(--texto-principal);
             padding: 50px;
+            min-height: 100vh;
         }
 
         header {
@@ -36,9 +39,15 @@
             padding-bottom: 20px;
         }
 
+        /* Título Blanco con resplandor suavizado */
         header h1 {
             font-size: 2.5rem;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            color: #ffffff;
+            font-weight: 800;
+            text-shadow: 
+                0 0 6px rgba(255, 255, 255, 0.6),
+                0 0 12px rgba(0, 150, 255, 0.3); /* Resplandor más tenue */
         }
 
         header p {
@@ -58,19 +67,27 @@
             background-color: var(--bg-tarjeta);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             border-top: 5px solid var(--borde);
+            backdrop-filter: blur(5px);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .modulo:hover {
             transform: translateY(-5px);
-            box-shadow: 0 1px 20px rgba(0,0,0,0.7);
+            box-shadow: 0 12px 28px rgba(0, 80, 180, 0.3);
         }
 
         .modulo-almacen { border-top-color: var(--color-almacen); }
         .modulo-produccion { border-top-color: var(--color-produccion); }
-        .modulo-planeacion { border-top-color: var(--color-planeacion); }
+        .modulo-plantas { border-top-color: var(--color-plantas); }
+
+        /* Estilo para enlace dentro del módulo */
+        .enlace-modulo {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
 
         .modulo h2 {
             margin-bottom: 40px;
@@ -117,7 +134,7 @@
 
         .badge-azul { background-color: rgba(52, 152, 219, 0.2); color: var(--color-almacen); }
         .badge-naranja { background-color: rgba(230, 126, 34, 0.2); color: var(--color-produccion); }
-        .badge-verde { background-color: rgba(46, 204, 113, 0.2); color: var(--color-planeacion); }
+        .badge-verde { background-color: rgba(46, 204, 113, 0.2); color: var(--color-plantas); }
     </style>
 </head>
 <body>
@@ -138,10 +155,12 @@
             <h2><span class="icono-modulo">⚙️</span> Producción</h2>
         </section>
 
-        <!-- MÓDULO PLANEACIÓN -->
-        <section class="modulo modulo-planeacion">
-            <h2><span class="icono-modulo">📅</span> Planeación</h2>
-        </section>
+        <!-- MÓDULO PLANTAS (LAYOUT) ENLAZADO -->
+        <a href="LAYOUT.html" class="enlace-modulo">
+            <section class="modulo modulo-plantas" style="cursor: pointer;">
+                <h2><span class="icono-modulo">🏭</span> PLANTAS</h2>
+            </section>
+        </a>
     </main>
 
 </body>
