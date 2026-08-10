@@ -620,7 +620,7 @@ const db = firebase.firestore(app);
 
         // --- CONEXIÓN FIREBASE FIRESTORE ---
         function escucharLayoutsFirebase() {
-            db.collection("layouts").onSnapshot((snapshot) => {
+            db.collection("industrial_layouts").onSnapshot((snapshot) => {
                 firebaseLibraryGlobal = {};
                 snapshot.forEach((doc) => {
                     firebaseLibraryGlobal[doc.id] = doc.data();
