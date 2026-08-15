@@ -45,8 +45,24 @@
     table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
     th { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding: 15px; text-transform: uppercase; font-size: 0.8rem; }
     td { border-bottom: 1px solid #2d3748; padding: 15px; }
+    tr.editable-row { cursor: pointer; user-select: none; transition: background 0.2s; }
+    tr.editable-row:hover { background: rgba(0, 230, 118, 0.05); }
     .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #4a5568; }
     .ensamble-tag { display: inline-block; background: rgba(0,230,118,0.1); color: var(--accent-color); padding: 4px 8px; font-size: 0.75rem; margin: 2px; border-radius: 4px; border: 1px solid var(--accent-color); }
+
+    /* Estilos para Ventana Modal de Edición */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+    .modal-overlay.show { display: flex; }
+    .modal-container { background: #0a1428; border: 1px solid var(--accent-color); border-radius: 15px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 0 30px rgba(0,230,118,0.2); position: relative; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
+    .modal-header h2 { margin: 0; color: var(--accent-color); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .close-modal { background: transparent; border: none; color: var(--text-gray); font-size: 1.5rem; cursor: pointer; }
+    .close-modal:hover { color: #ff5252; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
+    .btn-delete { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 1; }
+    .btn-delete:hover { background: #ff5252; color: #000; box-shadow: 0 0 15px #ff5252; }
+    .btn-save-edit { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 2; }
+    .btn-save-edit:hover { box-shadow: 0 0 15px var(--accent-color); }
   </style>
 </head>
 <body>
@@ -148,14 +164,103 @@
   </div>
 </div>
 
-<script>
-  function toggleSection(id, btn) {
+<!-- VENTANA MODAL FLOTANTE DE EDICIÓN -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2>Modificar Registro</h2>
+      <button class="close-modal" id="closeEditModal">&times;</button>
+    </div>
+    <form id="editMaterialForm" class="form-grid">
+      <input type="hidden" id="editDocId">
+      <div class="form-group"><label>N/P</label><input type="text" id="editNp" required></div>
+      <div class="form-group">
+          <label>Unidad</label>
+          <select id="editUnidad" required>
+              <option value="Pieza">Pieza</option><option value="Caja">Caja</option>
+              <option value="Juego">Juego</option><option value="Kg">Kg</option>
+          </select>
+      </div>
+      <div class="form-group"><label>Qty Unit</label><input type="number" id="editQtyUnit" step="0.01" required></div>
+
+      <div class="form-group">
+          <label>Ensamble(s)</label>
+          <select id="editEnsamble" multiple required style="height: 140px;">
+              <option value="13906-001">13906-001</option>
+              <option value="13906-002">13906-002</option>
+              <option value="13906-071">13906-071</option>
+              <option value="13906-072">13906-072</option>
+              <option value="13906-074">13906-074</option>
+              <option value="13936-071">13936-071</option>
+              <option value="13936-72">13936-72</option>
+              <option value="13908-001">13908-001</option>
+              <option value="13908-002">13908-002</option>
+              <option value="13908-071">13908-071</option>
+              <option value="13908-072">13908-072</option>
+              <option value="13908-074">13908-074</option>
+          </select>
+      </div>
+
+      <div class="form-group full-width"><label>Descripción</label><textarea id="editDescripcion" required></textarea></div>
+
+      <div class="form-group full-width camera-container">
+          <label>Captura de Imagen</label>
+          <button type="button" class="btn-camera" id="editStartBtn">Activar Cámara</button>
+          <video id="editVideo" autoplay playsinline style="display:none; width: 100%; max-width: 300px; background: #000; border-radius: 8px;"></video>
+          <button type="button" class="btn-camera" id="editSnapBtn" style="display:none; background: var(--accent-color); color: black;">Tomar Foto Nueva</button>
+          <canvas id="editCanvas" style="display:none;"></canvas>
+          <img id="editImgResult" style="max-width: 100px; margin-top: 10px; border-radius: 4px;">
+      </div>
+
+      <div class="modal-actions full-width">
+        <button type="button" class="btn-delete" id="deleteMaterialBtn">Eliminar</button>
+        <button type="submit" class="btn-save-edit">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- SDKs modulares de Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    onSnapshot, 
+    doc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  // Configuración obtenida de tu consola Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDg4s6-NstK-2qAGQdhJlogBxBjxzWFF18",
+    authDomain: "pick-list-e5d5e.firebaseapp.com",
+    projectId: "pick-list-e5d5e",
+    storageBucket: "pick-list-e5d5e.firebasestorage.app",
+    messagingSenderId: "510404429895",
+    appId: "1:510404429895:web:ab61807040c45db1df0962",
+    measurementId: "G-8VPJFYQ0MM"
+  };
+
+  // Inicializar Firebase y Firestore
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const materialesRef = collection(db, "materiales");
+
+  // Almacén temporal de los datos descargados
+  let materialesCache = {};
+
+  // --- NAVEGACIÓN ---
+  window.toggleSection = function(id, btn) {
       const content = document.getElementById(id);
       content.classList.toggle('show');
       btn.classList.toggle('active');
-  }
+  };
 
-  // --- LÓGICA DE CÁMARA ---
+  // --- CÁMARA REGISTRO ---
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const imgResult = document.getElementById('imgResult');
@@ -174,55 +279,222 @@
   });
 
   snapBtn.addEventListener('click', () => {
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth; 
+    canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
     capturedImageData = canvas.toDataURL('image/png');
-    imgResult.src = capturedImageData; imgResult.style.display = 'block';
+    imgResult.src = capturedImageData; 
+    imgResult.style.display = 'block';
     video.srcObject.getTracks().forEach(track => track.stop());
-    video.style.display = 'none'; snapBtn.style.display = 'none';
+    video.style.display = 'none'; 
+    snapBtn.style.display = 'none';
     startBtn.textContent = 'Capturado';
   });
 
-  // --- LÓGICA DE REGISTRO ---
-  document.getElementById('materialForm').addEventListener('submit', (e) => {
+  // --- CÁMARA EDICIÓN ---
+  const editVideo = document.getElementById('editVideo');
+  const editCanvas = document.getElementById('editCanvas');
+  const editImgResult = document.getElementById('editImgResult');
+  const editStartBtn = document.getElementById('editStartBtn');
+  const editSnapBtn = document.getElementById('editSnapBtn');
+  let editCapturedImageData = null;
+
+  editStartBtn.addEventListener('click', async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      editVideo.srcObject = stream;
+      editVideo.style.display = 'block';
+      editSnapBtn.style.display = 'block';
+      editStartBtn.textContent = 'Cámara Activa';
+    } catch (err) { alert("Error al acceder a la cámara: " + err); }
+  });
+
+  editSnapBtn.addEventListener('click', () => {
+    editCanvas.width = editVideo.videoWidth; 
+    editCanvas.height = editVideo.videoHeight;
+    editCanvas.getContext('2d').drawImage(editVideo, 0, 0);
+    editCapturedImageData = editCanvas.toDataURL('image/png');
+    editImgResult.src = editCapturedImageData; 
+    editVideo.srcObject.getTracks().forEach(track => track.stop());
+    editVideo.style.display = 'none'; 
+    editSnapBtn.style.display = 'none';
+    editStartBtn.textContent = 'Nueva Foto Capturada';
+  });
+
+  // --- GUARDAR NUEVO REGISTRO EN FIREBASE ---
+  document.getElementById('materialForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const np = document.getElementById('np').value;
-    const desc = document.getElementById('descripcion').value;
+    
+    const np = document.getElementById('np').value.trim();
+    const desc = document.getElementById('descripcion').value.trim();
     const unid = document.getElementById('unidad').value;
     const qU = parseFloat(document.getElementById('qtyUnit').value);
-    const newEns = Array.from(document.getElementById('ensamble').selectedOptions).map(o => o.value);
-    const tablaCuerpo = document.getElementById('tablaCuerpo');
-    const filas = tablaCuerpo.getElementsByTagName('tr');
-    
-    let encontrado = false;
-    for (let i = 0; i < filas.length; i++) {
-        if (filas[i].cells[1].textContent === np && filas[i].cells[2].textContent === desc) {
-            encontrado = true;
-            const celdEns = filas[i].cells[5];
-            const tagsExistentes = Array.from(celdEns.querySelectorAll('.ensamble-tag')).map(t => t.textContent);
-            newEns.forEach(ens => { if (!tagsExistentes.includes(ens)) tagsExistentes.push(ens); });
-            celdEns.innerHTML = tagsExistentes.map(e => `<span class="ensamble-tag">${e}</span>`).join(' ');
-            break;
-        }
-    }
+    const ensambles = Array.from(document.getElementById('ensamble').selectedOptions).map(o => o.value);
 
-    if (!encontrado) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td><img src="${capturedImageData || 'https://via.placeholder.com/50'}" class="img-preview"></td>
-          <td>${np}</td><td>${desc}</td><td>${unid}</td><td>${qU}</td>
-          <td>${newEns.map(e => `<span class="ensamble-tag">${e}</span>`).join(' ')}</td>`;
-        tablaCuerpo.appendChild(row);
+    const nuevoRegistro = {
+      np: np,
+      descripcion: desc,
+      unidad: unid,
+      qtyUnit: qU,
+      ensambles: ensambles,
+      imagen: capturedImageData || 'https://via.placeholder.com/50',
+      fecha: serverTimestamp()
+    };
+
+    try {
+      await addDoc(materialesRef, nuevoRegistro);
+      alert("Material registrado con éxito en Firebase");
+      
+      document.getElementById('materialForm').reset();
+      imgResult.style.display = 'none'; 
+      capturedImageData = null; 
+      startBtn.textContent = 'Activar Cámara';
+    } catch (error) {
+      console.error("Error al guardar en Firestore:", error);
+      alert("Error al guardar el registro en la base de datos.");
     }
-    document.getElementById('materialForm').reset();
-    imgResult.style.display = 'none'; capturedImageData = null; startBtn.textContent = 'Activar Cámara';
+  });
+
+  // --- ESCUCHAR TIEMPO REAL DESDE FIREBASE ---
+  onSnapshot(materialesRef, (snapshot) => {
+    const tablaCuerpo = document.getElementById('tablaCuerpo');
+    tablaCuerpo.innerHTML = ''; 
+    materialesCache = {};
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const id = docSnap.id;
+      materialesCache[id] = { id, ...data };
+
+      const row = document.createElement('tr');
+      row.className = 'editable-row';
+      row.dataset.id = id;
+      
+      const ensambleBadges = (data.ensambles || [])
+        .map(e => `<span class="ensamble-tag">${e}</span>`)
+        .join(' ');
+
+      row.innerHTML = `
+        <td><img src="${data.imagen || 'https://via.placeholder.com/50'}" class="img-preview"></td>
+        <td>${data.np || ''}</td>
+        <td>${data.descripcion || ''}</td>
+        <td>${data.unidad || ''}</td>
+        <td>${data.qtyUnit || 0}</td>
+        <td>${ensambleBadges}</td>
+      `;
+
+      // Evento de doble clic para abrir ventana modal de edición
+      row.addEventListener('dblclick', () => {
+        abrirModalEditar(id);
+      });
+
+      tablaCuerpo.appendChild(row);
+    });
+  });
+
+  // --- LÓGICA DE MODAL DE EDICIÓN ---
+  const editModal = document.getElementById('editModal');
+  const closeEditModal = document.getElementById('closeEditModal');
+
+  function abrirModalEditar(id) {
+    const data = materialesCache[id];
+    if (!data) return;
+
+    document.getElementById('editDocId').value = id;
+    document.getElementById('editNp').value = data.np || '';
+    document.getElementById('editUnidad').value = data.unidad || 'Pieza';
+    document.getElementById('editQtyUnit').value = data.qtyUnit || 0;
+    document.getElementById('editDescripcion').value = data.descripcion || '';
+
+    // Seleccionar ensambles
+    const selectEnsamble = document.getElementById('editEnsamble');
+    Array.from(selectEnsamble.options).forEach(opt => {
+      opt.selected = (data.ensambles || []).includes(opt.value);
+    });
+
+    // Cargar imagen existente
+    editCapturedImageData = data.imagen || null;
+    editImgResult.src = editCapturedImageData || 'https://via.placeholder.com/50';
+    editImgResult.style.display = 'block';
+    editStartBtn.textContent = 'Activar Cámara';
+
+    editModal.classList.add('show');
+  }
+
+  function cerrarModal() {
+    editModal.classList.remove('show');
+    if (editVideo.srcObject) {
+      editVideo.srcObject.getTracks().forEach(track => track.stop());
+    }
+    editVideo.style.display = 'none';
+    editSnapBtn.style.display = 'none';
+  }
+
+  closeEditModal.addEventListener('click', cerrarModal);
+
+  // Cerrar modal si se hace clic fuera del contenido
+  editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) cerrarModal();
+  });
+
+  // --- GUARDAR CAMBIOS DE EDICIÓN EN FIREBASE ---
+  document.getElementById('editMaterialForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('editDocId').value;
+    if (!id) return;
+
+    const np = document.getElementById('editNp').value.trim();
+    const desc = document.getElementById('editDescripcion').value.trim();
+    const unid = document.getElementById('editUnidad').value;
+    const qU = parseFloat(document.getElementById('editQtyUnit').value);
+    const ensambles = Array.from(document.getElementById('editEnsamble').selectedOptions).map(o => o.value);
+
+    const docRef = doc(db, "materiales", id);
+    const datosActualizados = {
+      np: np,
+      descripcion: desc,
+      unidad: unid,
+      qtyUnit: qU,
+      ensambles: ensambles,
+      imagen: editCapturedImageData || 'https://via.placeholder.com/50'
+    };
+
+    try {
+      await updateDoc(docRef, datosActualizados);
+      alert("Registro actualizado correctamente.");
+      cerrarModal();
+    } catch (error) {
+      console.error("Error al actualizar el registro:", error);
+      alert("Ocurrió un error al actualizar los datos.");
+    }
+  });
+
+  // --- ELIMINAR REGISTRO ---
+  document.getElementById('deleteMaterialBtn').addEventListener('click', async () => {
+    const id = document.getElementById('editDocId').value;
+    if (!id) return;
+
+    if (confirm("¿Estás seguro de que deseas eliminar este material?")) {
+      try {
+        await deleteDoc(doc(db, "materiales", id));
+        alert("Registro eliminado.");
+        cerrarModal();
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        alert("Ocurrió un error al eliminar el registro.");
+      }
+    }
   });
 
   // --- LÓGICA DE PICK LIST ---
-  function generarPickList() {
+  window.generarPickList = function() {
     const ensambleFiltro = document.getElementById('pickEnsambleFilter').value;
     const cantidadConstruir = parseFloat(document.getElementById('cantidadConstruir').value);
     
-    if(!ensambleFiltro || isNaN(cantidadConstruir)) { alert("Por favor seleccione un ensamble y la cantidad a construir."); return; }
+    if(!ensambleFiltro || isNaN(cantidadConstruir)) { 
+      alert("Por favor seleccione un ensamble y la cantidad a construir."); 
+      return; 
+    }
 
     const tablaCuerpo = document.getElementById('tablaCuerpo');
     const filas = tablaCuerpo.getElementsByTagName('tr');
@@ -252,12 +524,17 @@
     for (let key in resumen) {
         const item = resumen[key];
         const row = document.createElement('tr');
-        row.innerHTML = `<td><img src="${item.img}" class="img-preview"></td><td>${key}</td><td>${item.desc}</td><td>${item.total.toFixed(2)}</td>`;
+        row.innerHTML = `
+          <td><img src="${item.img}" class="img-preview"></td>
+          <td>${key}</td>
+          <td>${item.desc}</td>
+          <td>${item.total.toFixed(2)}</td>
+        `;
         tablaPickCuerpo.appendChild(row);
     }
     
     tablaPickList.style.display = 'table';
-  }
+  };
 </script>
 
 </body>
