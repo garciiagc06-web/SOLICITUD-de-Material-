@@ -6,7 +6,6 @@
   <title>Sistema de Solicitud de Materiales</title>
   <style>
     :root {
-      /* Paleta futurista */
       --bg-gradient: linear-gradient(135deg, #0a1428 0%, #1a2a40 100%);
       --glass-bg: rgba(20, 35, 60, 0.6);
       --glass-border: rgba(0, 230, 118, 0.2);
@@ -50,19 +49,18 @@
     .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #4a5568; }
     .ensamble-tag { display: inline-block; background: rgba(0,230,118,0.1); color: var(--accent-color); padding: 4px 8px; font-size: 0.75rem; margin: 2px; border-radius: 4px; border: 1px solid var(--accent-color); }
 
-    /* Estilos para Ventana Modal de Edición */
+    /* Modal Flotante */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
     .modal-overlay.show { display: flex; }
     .modal-container { background: #0a1428; border: 1px solid var(--accent-color); border-radius: 15px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 0 30px rgba(0,230,118,0.2); position: relative; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
-    .modal-header h2 { margin: 0; color: var(--accent-color); font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; }
+    .modal-header h2 { margin: 0; color: var(--accent-color); font-size: 1.2rem; text-transform: uppercase; }
     .close-modal { background: transparent; border: none; color: var(--text-gray); font-size: 1.5rem; cursor: pointer; }
     .close-modal:hover { color: #ff5252; }
     .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
     .btn-delete { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 1; }
-    .btn-delete:hover { background: #ff5252; color: #000; box-shadow: 0 0 15px #ff5252; }
+    .btn-delete:hover { background: #ff5252; color: #000; }
     .btn-save-edit { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 2; }
-    .btn-save-edit:hover { box-shadow: 0 0 15px var(--accent-color); }
   </style>
 </head>
 <body>
@@ -112,7 +110,7 @@
             <canvas id="canvas" style="display:none;"></canvas>
             <img id="imgResult" style="display:none; max-width: 100px; margin-top: 10px; border-radius: 4px;">
         </div>
-        <button type="submit" class="btn-submit">Registrar Material</button>
+        <button type="submit" class="btn-submit" id="btnSubmit">Registrar Material</button>
         </form>
     </div>
   </div>
@@ -164,7 +162,7 @@
   </div>
 </div>
 
-<!-- VENTANA MODAL FLOTANTE DE EDICIÓN -->
+<!-- MODAL FLOTANTE -->
 <div id="editModal" class="modal-overlay">
   <div class="modal-container">
     <div class="modal-header">
@@ -214,13 +212,12 @@
 
       <div class="modal-actions full-width">
         <button type="button" class="btn-delete" id="deleteMaterialBtn">Eliminar</button>
-        <button type="submit" class="btn-save-edit">Guardar Cambios</button>
+        <button type="submit" class="btn-save-edit" id="btnSaveEdit">Guardar Cambios</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- SDKs modulares de Firebase -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { 
@@ -234,7 +231,6 @@
     serverTimestamp 
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-  // Configuración obtenida de tu consola Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDg4s6-NstK-2qAGQdhJlogBxBjxzWFF18",
     authDomain: "pick-list-e5d5e.firebaseapp.com",
@@ -245,22 +241,19 @@
     measurementId: "G-8VPJFYQ0MM"
   };
 
-  // Inicializar Firebase y Firestore
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const materialesRef = collection(db, "materiales");
 
-  // Almacén temporal de los datos descargados
   let materialesCache = {};
 
-  // --- NAVEGACIÓN ---
   window.toggleSection = function(id, btn) {
       const content = document.getElementById(id);
       content.classList.toggle('show');
       btn.classList.toggle('active');
   };
 
-  // --- CÁMARA REGISTRO ---
+  // CÁMARA REGISTRO CON COMPRESIÓN
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const imgResult = document.getElementById('imgResult');
@@ -279,19 +272,24 @@
   });
 
   snapBtn.addEventListener('click', () => {
-    canvas.width = video.videoWidth; 
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    capturedImageData = canvas.toDataURL('image/png');
+    // Redimensionar imagen a máximo 400px de ancho para minimizar tamaño de guardado
+    const scale = 400 / video.videoWidth;
+    canvas.width = 400; 
+    canvas.height = video.videoHeight * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Comprimir la calidad al 60%
+    capturedImageData = canvas.toDataURL('image/jpeg', 0.6);
     imgResult.src = capturedImageData; 
     imgResult.style.display = 'block';
-    video.srcObject.getTracks().forEach(track => track.stop());
+    if(video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
     video.style.display = 'none'; 
     snapBtn.style.display = 'none';
     startBtn.textContent = 'Capturado';
   });
 
-  // --- CÁMARA EDICIÓN ---
+  // CÁMARA EDICIÓN CON COMPRESIÓN
   const editVideo = document.getElementById('editVideo');
   const editCanvas = document.getElementById('editCanvas');
   const editImgResult = document.getElementById('editImgResult');
@@ -310,21 +308,27 @@
   });
 
   editSnapBtn.addEventListener('click', () => {
-    editCanvas.width = editVideo.videoWidth; 
-    editCanvas.height = editVideo.videoHeight;
-    editCanvas.getContext('2d').drawImage(editVideo, 0, 0);
-    editCapturedImageData = editCanvas.toDataURL('image/png');
+    const scale = 400 / editVideo.videoWidth;
+    editCanvas.width = 400; 
+    editCanvas.height = editVideo.videoHeight * scale;
+    const ctx = editCanvas.getContext('2d');
+    ctx.drawImage(editVideo, 0, 0, editCanvas.width, editCanvas.height);
+    
+    editCapturedImageData = editCanvas.toDataURL('image/jpeg', 0.6);
     editImgResult.src = editCapturedImageData; 
-    editVideo.srcObject.getTracks().forEach(track => track.stop());
+    if(editVideo.srcObject) editVideo.srcObject.getTracks().forEach(track => track.stop());
     editVideo.style.display = 'none'; 
     editSnapBtn.style.display = 'none';
-    editStartBtn.textContent = 'Nueva Foto Capturada';
+    editStartBtn.textContent = 'Foto Nueva Capturada';
   });
 
-  // --- GUARDAR NUEVO REGISTRO EN FIREBASE ---
+  // GUARDAR EN FIREBASE
   document.getElementById('materialForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+    const btnSubmit = document.getElementById('btnSubmit');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = "Guardando...";
+
     const np = document.getElementById('np').value.trim();
     const desc = document.getElementById('descripcion').value.trim();
     const unid = document.getElementById('unidad').value;
@@ -343,19 +347,21 @@
 
     try {
       await addDoc(materialesRef, nuevoRegistro);
-      alert("Material registrado con éxito en Firebase");
-      
+      alert("¡Material registrado con éxito!");
       document.getElementById('materialForm').reset();
       imgResult.style.display = 'none'; 
       capturedImageData = null; 
       startBtn.textContent = 'Activar Cámara';
     } catch (error) {
-      console.error("Error al guardar en Firestore:", error);
-      alert("Error al guardar el registro en la base de datos.");
+      console.error("Error al guardar:", error);
+      alert("Error en Firebase: " + error.message);
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Registrar Material";
     }
   });
 
-  // --- ESCUCHAR TIEMPO REAL DESDE FIREBASE ---
+  // LEER EN TIEMPO REAL
   onSnapshot(materialesRef, (snapshot) => {
     const tablaCuerpo = document.getElementById('tablaCuerpo');
     tablaCuerpo.innerHTML = ''; 
@@ -368,7 +374,6 @@
 
       const row = document.createElement('tr');
       row.className = 'editable-row';
-      row.dataset.id = id;
       
       const ensambleBadges = (data.ensambles || [])
         .map(e => `<span class="ensamble-tag">${e}</span>`)
@@ -383,16 +388,15 @@
         <td>${ensambleBadges}</td>
       `;
 
-      // Evento de doble clic para abrir ventana modal de edición
-      row.addEventListener('dblclick', () => {
-        abrirModalEditar(id);
-      });
-
+      row.addEventListener('dblclick', () => abrirModalEditar(id));
       tablaCuerpo.appendChild(row);
     });
+  }, (error) => {
+    console.error("Error al leer Firestore:", error);
+    alert("Error de conexión a Firebase: " + error.message);
   });
 
-  // --- LÓGICA DE MODAL DE EDICIÓN ---
+  // MODAL Y EDICIÓN
   const editModal = document.getElementById('editModal');
   const closeEditModal = document.getElementById('closeEditModal');
 
@@ -406,13 +410,11 @@
     document.getElementById('editQtyUnit').value = data.qtyUnit || 0;
     document.getElementById('editDescripcion').value = data.descripcion || '';
 
-    // Seleccionar ensambles
     const selectEnsamble = document.getElementById('editEnsamble');
     Array.from(selectEnsamble.options).forEach(opt => {
       opt.selected = (data.ensambles || []).includes(opt.value);
     });
 
-    // Cargar imagen existente
     editCapturedImageData = data.imagen || null;
     editImgResult.src = editCapturedImageData || 'https://via.placeholder.com/50';
     editImgResult.style.display = 'block';
@@ -423,25 +425,21 @@
 
   function cerrarModal() {
     editModal.classList.remove('show');
-    if (editVideo.srcObject) {
-      editVideo.srcObject.getTracks().forEach(track => track.stop());
-    }
+    if (editVideo.srcObject) editVideo.srcObject.getTracks().forEach(track => track.stop());
     editVideo.style.display = 'none';
     editSnapBtn.style.display = 'none';
   }
 
   closeEditModal.addEventListener('click', cerrarModal);
+  editModal.addEventListener('click', (e) => { if (e.target === editModal) cerrarModal(); });
 
-  // Cerrar modal si se hace clic fuera del contenido
-  editModal.addEventListener('click', (e) => {
-    if (e.target === editModal) cerrarModal();
-  });
-
-  // --- GUARDAR CAMBIOS DE EDICIÓN EN FIREBASE ---
   document.getElementById('editMaterialForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('editDocId').value;
     if (!id) return;
+
+    const btnSaveEdit = document.getElementById('btnSaveEdit');
+    btnSaveEdit.disabled = true;
 
     const np = document.getElementById('editNp').value.trim();
     const desc = document.getElementById('editDescripcion').value.trim();
@@ -449,50 +447,41 @@
     const qU = parseFloat(document.getElementById('editQtyUnit').value);
     const ensambles = Array.from(document.getElementById('editEnsamble').selectedOptions).map(o => o.value);
 
-    const docRef = doc(db, "materiales", id);
-    const datosActualizados = {
-      np: np,
-      descripcion: desc,
-      unidad: unid,
-      qtyUnit: qU,
-      ensambles: ensambles,
-      imagen: editCapturedImageData || 'https://via.placeholder.com/50'
-    };
-
     try {
-      await updateDoc(docRef, datosActualizados);
-      alert("Registro actualizado correctamente.");
+      await updateDoc(doc(db, "materiales", id), {
+        np, descripcion: desc, unidad: unid, qtyUnit: qU, ensambles,
+        imagen: editCapturedImageData || 'https://via.placeholder.com/50'
+      });
+      alert("Registro actualizado.");
       cerrarModal();
     } catch (error) {
-      console.error("Error al actualizar el registro:", error);
-      alert("Ocurrió un error al actualizar los datos.");
+      alert("Error al actualizar: " + error.message);
+    } finally {
+      btnSaveEdit.disabled = false;
     }
   });
 
-  // --- ELIMINAR REGISTRO ---
   document.getElementById('deleteMaterialBtn').addEventListener('click', async () => {
     const id = document.getElementById('editDocId').value;
     if (!id) return;
-
-    if (confirm("¿Estás seguro de que deseas eliminar este material?")) {
+    if (confirm("¿Deseas eliminar este registro?")) {
       try {
         await deleteDoc(doc(db, "materiales", id));
         alert("Registro eliminado.");
         cerrarModal();
       } catch (error) {
-        console.error("Error al eliminar:", error);
-        alert("Ocurrió un error al eliminar el registro.");
+        alert("Error al eliminar: " + error.message);
       }
     }
   });
 
-  // --- LÓGICA DE PICK LIST ---
+  // PICK LIST
   window.generarPickList = function() {
     const ensambleFiltro = document.getElementById('pickEnsambleFilter').value;
     const cantidadConstruir = parseFloat(document.getElementById('cantidadConstruir').value);
     
     if(!ensambleFiltro || isNaN(cantidadConstruir)) { 
-      alert("Por favor seleccione un ensamble y la cantidad a construir."); 
+      alert("Seleccione un ensamble y la cantidad."); 
       return; 
     }
 
@@ -506,18 +495,14 @@
 
     for (let fila of filas) {
         const ensambleTags = Array.from(fila.cells[5].querySelectorAll('.ensamble-tag')).map(t => t.textContent);
-        
         if (ensambleTags.includes(ensambleFiltro)) {
             const img = fila.cells[0].querySelector('img').src;
             const np = fila.cells[1].textContent;
             const desc = fila.cells[2].textContent;
             const qtyUnit = parseFloat(fila.cells[4].textContent);
             
-            const key = np; 
-            if (!resumen[key]) {
-                resumen[key] = { img, desc, total: 0 };
-            }
-            resumen[key].total += (qtyUnit * cantidadConstruir);
+            if (!resumen[np]) resumen[np] = { img, desc, total: 0 };
+            resumen[np].total += (qtyUnit * cantidadConstruir);
         }
     }
 
@@ -532,7 +517,6 @@
         `;
         tablaPickCuerpo.appendChild(row);
     }
-    
     tablaPickList.style.display = 'table';
   };
 </script>
