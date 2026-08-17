@@ -41,6 +41,9 @@
     .btn-submit { grid-column: 1 / -1; background: transparent; color: var(--accent-color); border: 2px solid var(--accent-color); padding: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
     .btn-submit:hover { background: var(--accent-color); color: #000; box-shadow: 0 0 20px var(--accent-color); }
 
+    .btn-clear { background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 2px solid #ff5252; padding: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
+    .btn-clear:hover { background: #ff5252; color: #000; box-shadow: 0 0 15px rgba(255, 82, 82, 0.4); }
+
     .btn-print { background: #3182ce; color: white; border: none; padding: 10px 18px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: 0.3s; }
     .btn-print:hover { background: #2b6cb0; }
 
@@ -304,7 +307,10 @@
                     </div>
                 </div>
             </div>
-            <button class="btn-submit" onclick="generarPickList()">Calcular Pick List Multi-Ensamble</button>
+            <div class="form-group full-width" style="display: flex; gap: 10px;">
+                <button class="btn-submit" style="flex: 2;" onclick="generarPickList()">Calcular Pick List Multi-Ensamble</button>
+                <button class="btn-clear" style="flex: 1;" onclick="limpiarPickList()">Limpiar</button>
+            </div>
         </div>
         
         <!-- Encabezado con Botón Integrado -->
@@ -728,6 +734,26 @@
   // FUNCIÓN IMPRIMIR
   window.imprimirPickList = function() {
     window.print();
+  };
+
+  // FUNCIÓN PARA LIMPIAR CÁLCULOS Y SELECCIONES EN PICK LIST
+  window.limpiarPickList = function() {
+    const items = document.querySelectorAll('#pickEnsambleContainer .ensamble-option-item');
+    items.forEach(item => {
+      const checkbox = item.querySelector('.ensamble-checkbox');
+      const input = item.querySelector('.ensamble-qty-input');
+      
+      checkbox.checked = false;
+      input.disabled = true;
+      input.value = '';
+      item.classList.remove('active-item');
+    });
+
+    document.getElementById('tablaPickList').style.display = 'none';
+    document.getElementById('pickHeaderInfo').style.display = 'none';
+    document.getElementById('tablaPickCuerpo').innerHTML = '';
+    document.getElementById('infoModelo').textContent = '';
+    document.getElementById('infoCantidad').textContent = '';
   };
 </script>
 
