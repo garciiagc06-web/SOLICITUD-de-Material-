@@ -16,18 +16,34 @@
     }
 
     body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; background: var(--bg-gradient); background-attachment: fixed; color: var(--text-white); margin: 0; padding: 20px; min-height: 100vh; }
-    .container { max-width: 1000px; margin: 0 auto; }
+    .container { max-width: 800px; margin: 40px auto; }
     h1 { color: var(--text-white); letter-spacing: 3px; text-transform: uppercase; text-align: center; margin-bottom: 40px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
     
-    .toggle-section-btn { width: 100%; padding: 18px; margin-bottom: 15px; background: var(--glass-bg); color: var(--text-white); border: 1px solid var(--glass-border); border-radius: 12px; cursor: pointer; font-size: 1.1rem; font-weight: 600; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
-    .toggle-section-btn:hover { background: rgba(0, 230, 118, 0.1); border-color: var(--accent-color); }
-    .toggle-section-btn.active { background: var(--accent-color); color: #000; box-shadow: 0 0 15px var(--accent-color); }
+    /* BOTONES PRINCIPALES DEL MENÚ (CENTRADOS Y ANCHO REDUCIDO ESTÉTICO) */
+    .toggle-section-btn { 
+      width: 85%; 
+      max-width: 550px;
+      padding: 16px 24px; 
+      margin: 0 auto 20px auto; 
+      background: var(--glass-bg); 
+      color: var(--text-white); 
+      border: 1px solid var(--glass-border); 
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-size: 1.05rem; 
+      font-weight: 600; 
+      transition: all 0.3s ease; 
+      text-transform: uppercase; 
+      letter-spacing: 1px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 10px;
+      text-align: center;
+    }
+    .toggle-section-btn:hover { background: rgba(0, 230, 118, 0.1); border-color: var(--accent-color); box-shadow: 0 0 15px rgba(0, 230, 118, 0.2); transform: translateY(-2px); }
 
-    .section-content { display: none; }
-    .section-content.show { display: block; animation: fadeIn 0.5s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .card { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 15px; padding: 25px; margin-bottom: 25px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5); }
+    .card { background: transparent; border: none; padding: 0; margin-bottom: 0; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
     .form-group { display: flex; flex-direction: column; }
     .form-group.full-width { grid-column: 1 / -1; }
@@ -36,15 +52,63 @@
     input, select, textarea { background: var(--input-bg); border: 1px solid #334e68; color: #fff; padding: 12px; border-radius: 8px; transition: border 0.3s; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent-color); }
     
-    .btn-camera { background: #2d3748; border: 1px solid #4a5568; color: white; padding: 10px; cursor: pointer; border-radius: 6px; }
+    /* ESTILOS DE BOTONES SECUNDARIOS Y ACCIONES */
+    .btn-camera { 
+      background: #2d3748; 
+      border: 1px solid #4a5568; 
+      color: white; 
+      padding: 10px 20px; 
+      cursor: pointer; 
+      border-radius: 6px; 
+      text-align: center;
+      align-self: center;
+    }
     .btn-camera:hover { background: #4a5568; }
-    .btn-submit { grid-column: 1 / -1; background: transparent; color: var(--accent-color); border: 2px solid var(--accent-color); padding: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
+
+    .btn-submit { 
+      grid-column: 1 / -1; 
+      background: transparent; 
+      color: var(--accent-color); 
+      border: 2px solid var(--accent-color); 
+      padding: 12px 24px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      border-radius: 8px; 
+      transition: 0.3s; 
+      text-align: center;
+      max-width: 400px;
+      margin: 0 auto;
+      width: 100%;
+    }
     .btn-submit:hover { background: var(--accent-color); color: #000; box-shadow: 0 0 20px var(--accent-color); }
 
-    .btn-clear { background: rgba(255, 82, 82, 0.1); color: #ff5252; border: 2px solid #ff5252; padding: 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
+    .btn-clear { 
+      background: rgba(255, 82, 82, 0.1); 
+      color: #ff5252; 
+      border: 2px solid #ff5252; 
+      padding: 12px 20px; 
+      cursor: pointer; 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      border-radius: 8px; 
+      transition: 0.3s; 
+      text-align: center;
+    }
     .btn-clear:hover { background: #ff5252; color: #000; box-shadow: 0 0 15px rgba(255, 82, 82, 0.4); }
 
-    .btn-print { background: #3182ce; color: white; border: none; padding: 10px 18px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+    .btn-print { 
+      background: #3182ce; 
+      color: white; 
+      border: none; 
+      padding: 10px 18px; 
+      font-weight: bold; 
+      text-transform: uppercase; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      transition: 0.3s; 
+      text-align: center;
+    }
     .btn-print:hover { background: #2b6cb0; }
 
     /* ESTILOS PARA LA SELECCIÓN MULTIPLE DE ENSAMBLES CON CANTIDAD */
@@ -71,77 +135,59 @@
       transition: all 0.2s ease;
     }
 
-    .ensamble-option-item:hover {
-      border-color: rgba(0, 230, 118, 0.3);
-    }
+    .ensamble-option-item:hover { border-color: rgba(0, 230, 118, 0.3); }
+    .ensamble-option-item.active-item { background: rgba(0, 230, 118, 0.08); border-color: var(--accent-color); }
 
-    .ensamble-option-item.active-item {
-      background: rgba(0, 230, 118, 0.08);
-      border-color: var(--accent-color);
-    }
+    .ensamble-label-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+    .ensamble-checkbox { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
+    .ensamble-qty-input { width: 80px; padding: 6px 8px; text-align: right; font-size: 0.9rem; }
+    .ensamble-qty-input:disabled { opacity: 0.3; background: rgba(0, 0, 0, 0.2); border-color: #2d3748; cursor: not-allowed; }
 
-    .ensamble-label-wrap {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .ensamble-checkbox {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent-color);
-      cursor: pointer;
-    }
-
-    .ensamble-qty-input {
-      width: 80px;
-      padding: 6px 8px;
-      text-align: right;
-      font-size: 0.9rem;
-    }
-
-    .ensamble-qty-input:disabled {
-      opacity: 0.3;
-      background: rgba(0, 0, 0, 0.2);
-      border-color: #2d3748;
-      cursor: not-allowed;
-    }
-
-    /* Estilos del Encabezado con Botón Alineado */
+    /* Estilos del Encabezado */
     .pick-header-info { display: none; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); padding: 15px 20px; border-radius: 8px; margin-top: 20px; margin-bottom: 10px; justify-content: space-between; align-items: center; }
     .pick-header-info h3 { margin: 0 0 8px 0; color: var(--accent-color); text-transform: uppercase; }
     .pick-header-info p { margin: 4px 0; color: var(--text-white); font-size: 1rem; }
 
     table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
-    th { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding: 15px; text-transform: uppercase; font-size: 0.8rem; }
+    th { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding: 15px; text-transform: uppercase; font-size: 0.8rem; text-align: left; }
     td { border-bottom: 1px solid #2d3748; padding: 15px; }
     tr.editable-row { cursor: pointer; user-select: none; transition: background 0.2s; }
     tr.editable-row:hover { background: rgba(0, 230, 118, 0.05); }
-    .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #4a5568; }
+    
+    .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 1px solid #4a5568; cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease; }
+    .img-preview:hover { transform: scale(1.1); border-color: var(--accent-color); }
+    
     .ensamble-tag { display: inline-block; background: rgba(0,230,118,0.1); color: var(--accent-color); padding: 4px 8px; font-size: 0.75rem; margin: 2px; border-radius: 4px; border: 1px solid var(--accent-color); }
 
-    /* Modal Flotante */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
-    .modal-overlay.show { display: flex; }
-    .modal-container { background: #0a1428; border: 1px solid var(--accent-color); border-radius: 15px; width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 0 30px rgba(0,230,118,0.2); position: relative; }
+    /* MODALES FLOTANTES */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+    .modal-overlay.show { display: flex; animation: fadeInModal 0.3s ease; }
+    @keyframes fadeInModal { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    
+    .modal-container { background: #0a1428; border: 1px solid var(--accent-color); border-radius: 15px; width: 100%; max-width: 850px; max-height: 90vh; overflow-y: auto; padding: 25px; box-shadow: 0 0 30px rgba(0,230,118,0.2); position: relative; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
     .modal-header h2 { margin: 0; color: var(--accent-color); font-size: 1.2rem; text-transform: uppercase; }
     .close-modal { background: transparent; border: none; color: var(--text-gray); font-size: 1.5rem; cursor: pointer; }
     .close-modal:hover { color: #ff5252; }
-    .modal-actions { display: flex; gap: 10px; margin-top: 15px; }
-    .btn-delete { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 1; }
+    .modal-actions { display: flex; gap: 15px; margin-top: 15px; justify-content: center; }
+    .btn-delete { background: rgba(255, 82, 82, 0.2); color: #ff5252; border: 1px solid #ff5252; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 1; max-width: 200px; text-align: center; }
     .btn-delete:hover { background: #ff5252; color: #000; }
-    .btn-save-edit { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 2; }
+    .btn-save-edit { background: var(--accent-color); color: #000; border: 1px solid var(--accent-color); padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; flex: 2; max-width: 300px; text-align: center; }
 
-    /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN */
+    /* MODAL PREVISUALIZACIÓN DE IMAGEN */
+    .image-modal-body { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px; }
+    .image-modal-body img { max-width: 100%; max-height: 50vh; object-fit: contain; border-radius: 10px; border: 2px solid var(--accent-color); box-shadow: 0 0 20px rgba(0,230,118,0.3); }
+    .image-modal-info { background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; border: 1px solid var(--glass-border); width: 100%; box-sizing: border-box; }
+    .image-modal-info h3 { margin: 0 0 8px 0; color: var(--accent-color); font-size: 1.1rem; }
+    .image-modal-info p { margin: 0; color: var(--text-white); font-size: 0.95rem; line-height: 1.4; word-break: break-word; }
+
+    /* ESTILOS PARA IMPRESIÓN */
     @media print {
       body { background: white !important; color: black !important; padding: 0 !important; }
-      h1, .toggle-section-btn, #formSection, #listSection, .form-grid, .btn-print, .modal-overlay { display: none !important; }
-      #pickListSection { display: block !important; }
-      .section-content { display: block !important; }
-      .card { background: white !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+      h1, .toggle-section-btn, #formModal, #listModal, #editModal, #imageModal, .btn-print { display: none !important; }
+      #pickModal { display: block !important; position: relative !important; background: white !important; padding: 0 !important; }
+      .modal-container { border: none !important; box-shadow: none !important; max-width: 100% !important; max-height: none !important; padding: 0 !important; }
+      .modal-header, .form-grid, .btn-clear { display: none !important; }
       .pick-header-info { display: block !important; border: 1px solid #000 !important; color: black !important; background: transparent !important; }
       .pick-header-info h3, .pick-header-info p { color: black !important; }
       table { border: 1px solid #000 !important; width: 100% !important; margin-top: 10px !important; }
@@ -156,8 +202,26 @@
 <div class="container">
   <h1>Portal de Materiales</h1>
 
-  <button class="toggle-section-btn" onclick="toggleSection('formSection', this)">1. Ingresar Nuevo Registro</button>
-  <div id="formSection" class="section-content">
+  <button class="toggle-section-btn" onclick="abrirModal('formModal')">
+    <span>1. Ingresar Nuevo Registro ↗</span>
+  </button>
+  
+  <button class="toggle-section-btn" onclick="abrirModal('listModal')">
+    <span>2. Lista de Materiales ↗</span>
+  </button>
+  
+  <button class="toggle-section-btn" onclick="abrirModal('pickModal')">
+    <span>3. Pick List ↗</span>
+  </button>
+</div>
+
+<!-- MODAL 1: FORMULARIO -->
+<div id="formModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2>1. Ingresar Nuevo Registro</h2>
+      <button class="close-modal" onclick="cerrarModal('formModal')">&times;</button>
+    </div>
     <div class="card">
         <form id="materialForm" class="form-grid">
         <div class="form-group"><label>N/P</label><input type="text" id="np" required></div>
@@ -190,11 +254,11 @@
 
         <div class="form-group full-width"><label>Descripción</label><textarea id="descripcion" required></textarea></div>
 
-        <div class="form-group full-width camera-container">
-            <label>Captura</label>
+        <div class="form-group full-width camera-container" style="align-items: center;">
+            <label style="align-self: flex-start;">Captura</label>
             <button type="button" class="btn-camera" id="startBtn">Activar Cámara</button>
-            <video id="video" autoplay playsinline style="display:none; width: 100%; max-width: 300px; background: #000; border-radius: 8px;"></video>
-            <button type="button" class="btn-camera" id="snapBtn" style="display:none; background: var(--accent-color); color: black;">Tomar Foto</button>
+            <video id="video" autoplay playsinline style="display:none; width: 100%; max-width: 300px; background: #000; border-radius: 8px; margin-top: 10px;"></video>
+            <button type="button" class="btn-camera" id="snapBtn" style="display:none; background: var(--accent-color); color: black; margin-top: 10px;">Tomar Foto</button>
             <canvas id="canvas" style="display:none;"></canvas>
             <img id="imgResult" style="display:none; max-width: 100px; margin-top: 10px; border-radius: 4px;">
         </div>
@@ -202,11 +266,16 @@
         </form>
     </div>
   </div>
+</div>
 
-  <button class="toggle-section-btn" onclick="toggleSection('listSection', this)">2. Lista de Materiales</button>
-  <div id="listSection" class="section-content">
+<!-- MODAL 2: LISTA DE MATERIALES -->
+<div id="listModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2>2. Lista de Materiales</h2>
+      <button class="close-modal" onclick="cerrarModal('listModal')">&times;</button>
+    </div>
     <div class="card">
-        <!-- BARRA DE BÚSQUEDA AGREGADA EN EL ENCABEZADO -->
         <div class="form-group" style="margin-bottom: 20px;">
             <label for="buscarMaterial">Buscar Material (N/P o Descripción):</label>
             <input type="text" id="buscarMaterial" placeholder="Escribe un N/P o descripción..." oninput="filtrarMateriales()">
@@ -218,9 +287,15 @@
         </table>
     </div>
   </div>
+</div>
 
-  <button class="toggle-section-btn" onclick="toggleSection('pickListSection', this)">3. Pick List</button>
-  <div id="pickListSection" class="section-content">
+<!-- MODAL 3: PICK LIST -->
+<div id="pickModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2>3. Pick List</h2>
+      <button class="close-modal" onclick="cerrarModal('pickModal')">&times;</button>
+    </div>
     <div class="card">
         <div class="form-grid">
             <div class="form-group full-width">
@@ -312,13 +387,12 @@
                     </div>
                 </div>
             </div>
-            <div class="form-group full-width" style="display: flex; gap: 10px;">
-                <button class="btn-submit" style="flex: 2;" onclick="generarPickList()">Calcular Pick List Multi-Ensamble</button>
-                <button class="btn-clear" style="flex: 1;" onclick="limpiarPickList()">Limpiar</button>
+            <div class="form-group full-width" style="display: flex; gap: 15px; justify-content: center;">
+                <button class="btn-submit" style="margin: 0; max-width: 350px;" onclick="generarPickList()">Calcular Pick List Multi-Ensamble</button>
+                <button class="btn-clear" style="max-width: 150px;" onclick="limpiarPickList()">Limpiar</button>
             </div>
         </div>
         
-        <!-- Encabezado con Botón Integrado -->
         <div id="pickHeaderInfo" class="pick-header-info">
           <div>
             <h3>REPORTE DE PICK LIST MULTI-ENSAMBLE</h3>
@@ -336,7 +410,7 @@
   </div>
 </div>
 
-<!-- MODAL FLOTANTE -->
+<!-- MODAL EDICIÓN -->
 <div id="editModal" class="modal-overlay">
   <div class="modal-container">
     <div class="modal-header">
@@ -375,11 +449,11 @@
 
       <div class="form-group full-width"><label>Descripción</label><textarea id="editDescripcion" required></textarea></div>
 
-      <div class="form-group full-width camera-container">
-          <label>Captura de Imagen</label>
+      <div class="form-group full-width camera-container" style="align-items: center;">
+          <label style="align-self: flex-start;">Captura de Imagen</label>
           <button type="button" class="btn-camera" id="editStartBtn">Activar Cámara</button>
-          <video id="editVideo" autoplay playsinline style="display:none; width: 100%; max-width: 300px; background: #000; border-radius: 8px;"></video>
-          <button type="button" class="btn-camera" id="editSnapBtn" style="display:none; background: var(--accent-color); color: black;">Tomar Foto Nueva</button>
+          <video id="editVideo" autoplay playsinline style="display:none; width: 100%; max-width: 300px; background: #000; border-radius: 8px; margin-top: 10px;"></video>
+          <button type="button" class="btn-camera" id="editSnapBtn" style="display:none; background: var(--accent-color); color: black; margin-top: 10px;">Tomar Foto Nueva</button>
           <canvas id="editCanvas" style="display:none;"></canvas>
           <img id="editImgResult" style="max-width: 100px; margin-top: 10px; border-radius: 4px;">
       </div>
@@ -389,6 +463,23 @@
         <button type="submit" class="btn-save-edit" id="btnSaveEdit">Guardar Cambios</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- MODAL PREVISUALIZACIÓN DE IMAGEN -->
+<div id="imageModal" class="modal-overlay">
+  <div class="modal-container" style="max-width: 500px;">
+    <div class="modal-header">
+      <h2>Vista Previa de Material</h2>
+      <button class="close-modal" id="closeImageModal">&times;</button>
+    </div>
+    <div class="image-modal-body">
+      <img id="previewModalImg" src="" alt="Vista previa amplia">
+      <div class="image-modal-info">
+        <h3 id="previewModalNp"></h3>
+        <p id="previewModalDesc"></p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -421,13 +512,38 @@
 
   let materialesCache = {};
 
-  window.toggleSection = function(id, btn) {
-      const content = document.getElementById(id);
-      content.classList.toggle('show');
-      btn.classList.toggle('active');
+  // FUNCIONES DE CONTROL DE MODALES FLOTANTES
+  window.abrirModal = function(idModal) {
+    document.getElementById(idModal).classList.add('show');
   };
 
-  // FUNCIÓN PARA FILTRAR LA TABLA DE MATERIALES POR N/P O DESCRIPCIÓN
+  window.cerrarModal = function(idModal) {
+    document.getElementById(idModal).classList.remove('show');
+  };
+
+  // Cierre al dar clic fuera del contenedor
+  document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+      }
+    });
+  });
+
+  // PREVISUALIZACIÓN DE IMAGEN
+  window.abrirModalImagen = function(src, np, descripcion) {
+    document.getElementById('previewModalImg').src = src;
+    document.getElementById('previewModalNp').textContent = `Número de Parte: ${np}`;
+    document.getElementById('previewModalDesc').textContent = descripcion;
+    abrirModal('imageModal');
+  };
+
+  const closeImageModal = document.getElementById('closeImageModal');
+  if(closeImageModal) {
+    closeImageModal.addEventListener('click', () => cerrarModal('imageModal'));
+  }
+
+  // BÚSQUEDA / FILTRADO EN TABLA
   window.filtrarMateriales = function() {
     const textoFiltro = document.getElementById('buscarMaterial').value.toLowerCase().trim();
     const filas = document.querySelectorAll('#tablaCuerpo tr');
@@ -444,7 +560,7 @@
     });
   };
 
-  // FUNCIÓN PARA HABILITAR / DESHABILITAR INPUTS DE CANTIDAD
+  // MANEJO DE SELECCIÓN EN PICK LIST
   window.toggleEnsambleInput = function(checkbox) {
     const parentItem = checkbox.closest('.ensamble-option-item');
     const input = parentItem.querySelector('.ensamble-qty-input');
@@ -460,7 +576,7 @@
     }
   };
 
-  // CÁMARA REGISTRO CON COMPRESIÓN
+  // CÁMARA FORMULARIO
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const imgResult = document.getElementById('imgResult');
@@ -494,7 +610,7 @@
     startBtn.textContent = 'Capturado';
   });
 
-  // CÁMARA EDICIÓN CON COMPRESIÓN
+  // CÁMARA EDICIÓN
   const editVideo = document.getElementById('editVideo');
   const editCanvas = document.getElementById('editCanvas');
   const editImgResult = document.getElementById('editImgResult');
@@ -527,7 +643,7 @@
     editStartBtn.textContent = 'Foto Nueva Capturada';
   });
 
-  // GUARDAR EN FIREBASE
+  // GUARDAR REGISTRO NUEVO
   document.getElementById('materialForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btnSubmit = document.getElementById('btnSubmit');
@@ -557,6 +673,7 @@
       imgResult.style.display = 'none'; 
       capturedImageData = null; 
       startBtn.textContent = 'Activar Cámara';
+      cerrarModal('formModal');
     } catch (error) {
       console.error("Error al guardar:", error);
       alert("Error en Firebase: " + error.message);
@@ -566,7 +683,7 @@
     }
   });
 
-  // LEER EN TIEMPO REAL
+  // CONSULTA Y CARGA DE TABLA EN TIEMPO REAL
   onSnapshot(materialesRef, (snapshot) => {
     const tablaCuerpo = document.getElementById('tablaCuerpo');
     tablaCuerpo.innerHTML = ''; 
@@ -584,20 +701,30 @@
         .map(e => `<span class="ensamble-tag">${e}</span>`)
         .join(' ');
 
+      const imgSrc = data.imagen || 'https://via.placeholder.com/50';
+      const npText = data.np || '';
+      const descText = data.descripcion || '';
+
       row.innerHTML = `
-        <td><img src="${data.imagen || 'https://via.placeholder.com/50'}" class="img-preview"></td>
-        <td>${data.np || ''}</td>
-        <td>${data.descripcion || ''}</td>
+        <td><img src="${imgSrc}" class="img-preview"></td>
+        <td>${npText}</td>
+        <td>${descText}</td>
         <td>${data.unidad || ''}</td>
         <td>${data.qtyUnit || 0}</td>
         <td>${ensambleBadges}</td>
       `;
 
+      // Evento de clic en imagen protegido
+      const imgElem = row.querySelector('.img-preview');
+      imgElem.addEventListener('click', (e) => {
+        e.stopPropagation();
+        abrirModalImagen(imgSrc, npText, descText);
+      });
+
       row.addEventListener('dblclick', () => abrirModalEditar(id));
       tablaCuerpo.appendChild(row);
     });
 
-    // Reaplicar el filtro de búsqueda tras actualización de datos
     filtrarMateriales();
   }, (error) => {
     console.error("Error al leer Firestore:", error);
@@ -605,7 +732,6 @@
   });
 
   // MODAL Y EDICIÓN
-  const editModal = document.getElementById('editModal');
   const closeEditModal = document.getElementById('closeEditModal');
 
   function abrirModalEditar(id) {
@@ -628,18 +754,17 @@
     editImgResult.style.display = 'block';
     editStartBtn.textContent = 'Activar Cámara';
 
-    editModal.classList.add('show');
+    abrirModal('editModal');
   }
 
-  function cerrarModal() {
-    editModal.classList.remove('show');
+  function cerrarModalEditar() {
+    cerrarModal('editModal');
     if (editVideo.srcObject) editVideo.srcObject.getTracks().forEach(track => track.stop());
     editVideo.style.display = 'none';
     editSnapBtn.style.display = 'none';
   }
 
-  closeEditModal.addEventListener('click', cerrarModal);
-  editModal.addEventListener('click', (e) => { if (e.target === editModal) cerrarModal(); });
+  closeEditModal.addEventListener('click', cerrarModalEditar);
 
   document.getElementById('editMaterialForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -661,7 +786,7 @@
         imagen: editCapturedImageData || 'https://via.placeholder.com/50'
       });
       alert("Registro actualizado.");
-      cerrarModal();
+      cerrarModalEditar();
     } catch (error) {
       alert("Error al actualizar: " + error.message);
     } finally {
@@ -676,14 +801,14 @@
       try {
         await deleteDoc(doc(db, "materiales", id));
         alert("Registro eliminado.");
-        cerrarModal();
+        cerrarModalEditar();
       } catch (error) {
         alert("Error al eliminar: " + error.message);
       }
     }
   });
 
-  // PICK LIST MULTI-ENSAMBLE
+  // PICK LIST MULTI-ENSAMBLE (PROTEGIDO)
   window.generarPickList = function() {
     const items = document.querySelectorAll('#pickEnsambleContainer .ensamble-option-item');
     const seleccionados = {};
@@ -709,7 +834,6 @@
       return;
     }
 
-    // Actualizar encabezado del reporte
     document.getElementById('infoModelo').textContent = listaEnsambles.map(e => `${e} (${seleccionados[e]} pzas)`).join(', ');
     document.getElementById('infoCantidad').textContent = totalPiezasConstruir;
     document.getElementById('pickHeaderInfo').style.display = 'flex';
@@ -749,18 +873,22 @@
           <td>${item.desc}</td>
           <td>${item.total.toFixed(2)}</td>
         `;
+
+        const imgElem = row.querySelector('.img-preview');
+        imgElem.addEventListener('click', () => {
+          abrirModalImagen(item.img, key, item.desc);
+        });
+
         tablaPickCuerpo.appendChild(row);
     }
     
     tablaPickList.style.display = 'table';
   };
 
-  // FUNCIÓN IMPRIMIR
   window.imprimirPickList = function() {
     window.print();
   };
 
-  // FUNCIÓN PARA LIMPIAR CÁLCULOS Y SELECCIONES EN PICK LIST
   window.limpiarPickList = function() {
     const items = document.querySelectorAll('#pickEnsambleContainer .ensamble-option-item');
     items.forEach(item => {
