@@ -206,6 +206,12 @@
   <button class="toggle-section-btn" onclick="toggleSection('listSection', this)">2. Lista de Materiales</button>
   <div id="listSection" class="section-content">
     <div class="card">
+        <!-- BARRA DE BÚSQUEDA AGREGADA EN EL ENCABEZADO -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label for="buscarMaterial">Buscar Material (N/P o Descripción):</label>
+            <input type="text" id="buscarMaterial" placeholder="Escribe un N/P o descripción..." oninput="filtrarMateriales()">
+        </div>
+
         <table id="tablaMateriales">
             <thead><tr><th>Imagen</th><th>N/P</th><th>Descripción</th><th>U. Medida</th><th>Qty Unit</th><th>Ensamble</th></tr></thead>
             <tbody id="tablaCuerpo"></tbody>
@@ -220,7 +226,6 @@
             <div class="form-group full-width">
                 <label>Seleccionar Ensambles y Cantidades</label>
                 <div class="ensambles-list-container" id="pickEnsambleContainer">
-                    <!-- Ítems generados con Checkboxes e Inputs -->
                     <div class="ensamble-option-item">
                         <label class="ensamble-label-wrap">
                             <input type="checkbox" class="ensamble-checkbox" value="13906-001" onchange="toggleEnsambleInput(this)">
@@ -422,6 +427,23 @@
       btn.classList.toggle('active');
   };
 
+  // FUNCIÓN PARA FILTRAR LA TABLA DE MATERIALES POR N/P O DESCRIPCIÓN
+  window.filtrarMateriales = function() {
+    const textoFiltro = document.getElementById('buscarMaterial').value.toLowerCase().trim();
+    const filas = document.querySelectorAll('#tablaCuerpo tr');
+
+    filas.forEach(fila => {
+      const np = fila.cells[1]?.textContent.toLowerCase() || '';
+      const descripcion = fila.cells[2]?.textContent.toLowerCase() || '';
+
+      if (np.includes(textoFiltro) || descripcion.includes(textoFiltro)) {
+        fila.style.display = '';
+      } else {
+        fila.style.display = 'none';
+      }
+    });
+  };
+
   // FUNCIÓN PARA HABILITAR / DESHABILITAR INPUTS DE CANTIDAD
   window.toggleEnsambleInput = function(checkbox) {
     const parentItem = checkbox.closest('.ensamble-option-item');
@@ -574,6 +596,9 @@
       row.addEventListener('dblclick', () => abrirModalEditar(id));
       tablaCuerpo.appendChild(row);
     });
+
+    // Reaplicar el filtro de búsqueda tras actualización de datos
+    filtrarMateriales();
   }, (error) => {
     console.error("Error al leer Firestore:", error);
     alert("Error de conexión a Firebase: " + error.message);
@@ -704,7 +729,6 @@
       const desc = fila.cells[2].textContent.trim();
       const qtyUnit = parseFloat(fila.cells[4].textContent);
 
-      // Evaluar cada ensamble coincidente en la fila de materiales
       ensambleTags.forEach(ensamble => {
         if (seleccionados[ensamble]) {
           const cantidadConstruir = seleccionados[ensamble];
